@@ -136,7 +136,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 
   <div class="stage">
     <div class="poster" id="poster">
-      <img id="bg" src="bckground.png" alt="poster">
+      <img id="bg" src="bckground.jpg" alt="poster">
     </div>
   </div>
   </div><!-- /#app -->
@@ -306,6 +306,16 @@ $("restore").addEventListener("click", () => {
 
 def main():
     import html as _html, re
+    from PIL import Image
+    # Tao anh nen toi uu cho web (JPEG) de tai nhanh tren dien thoai
+    png_path = pathlib.Path("bckground.png")
+    jpg_path = pathlib.Path("bckground.jpg")
+    if png_path.exists():
+        im = Image.open(png_path).convert("RGB")
+        im.save(jpg_path, "JPEG", quality=90, optimize=True, progressive=True)
+        print(f"da tao {jpg_path}  ({jpg_path.stat().st_size/1e3:.0f} KB) tu {png_path}")
+    elif not jpg_path.exists():
+        print("CANH BAO: khong tim thay bckground.png hoac bckground.jpg")
     pw   = base64.b64encode(PASSWORD.encode()).decode()
     html = TEMPLATE.replace("__PW__", pw)
     # Giai ma HTML entity + \uXXXX de file de doc/chinh sua bang tieng Viet
@@ -313,7 +323,7 @@ def main():
     html = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), html)
     pathlib.Path(OUT).write_text(html, encoding="utf-8")
     print(f"da tao {OUT}  ({len(html)/1e3:.0f} KB)  |  mat khau: {PASSWORD}")
-    print("Luu y: index.html can file bckground.png cung thu muc de hien thi anh nen.")
+    print("Luu y: index.html can file bckground.jpg cung thu muc de hien thi anh nen.")
 
 
 if __name__ == "__main__":
