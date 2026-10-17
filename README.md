@@ -2,9 +2,9 @@
 
 Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp VinaPhone** (30 dòng, chia 3 khối × 10 dòng), xuất ra ảnh/PDF để in.
 
-## Cách dùng nhanh nhất — `so-dep.html`
+## Cách dùng nhanh nhất — `index.html`
 
-1. **Nhấp đôi** vào `so-dep.html` → mở bằng Chrome (chạy offline, không cần mạng).
+1. **Nhấp đôi** vào `index.html` → mở bằng Chrome (chạy offline, không cần mạng).
 2. Nhập **mật khẩu** `ngotanthong` → vào công cụ.
 3. **Dán danh sách** vào ô bên trái → poster tự điền ngay.
 4. Bấm **🖨 In / Lưu PDF** → chọn *Đích: Lưu dưới dạng PDF* → Lưu.
@@ -27,7 +27,7 @@ Nội dung được **giữ y nguyên** (dấu cách trong số, chữ `k`, `0`,
 
 Chỉ dán 1 cột số thuê bao cũng OK — cột CK sẽ để trống.
 
-### Tiện ích trong `so-dep.html`
+### Tiện ích trong `index.html`
 
 - Nhớ danh sách vừa nhập (link "↩ Khôi phục danh sách vừa nhập" khi tải lại trang).
 - Chỉnh màu số thuê bao / màu CK / cỡ chữ trực tiếp.
@@ -43,7 +43,7 @@ Thay file `bckground.png` bằng ảnh mới **cùng tên**, rồi chạy:
 python3 build_tool.py
 ```
 
-→ `so-dep.html` tự nhúng ảnh mới (một file duy nhất, mang đi đâu cũng được).
+→ `index.html` tự nhúng ảnh mới (một file duy nhất, mang đi đâu cũng được).
 
 ## Đổi mật khẩu
 
@@ -59,8 +59,8 @@ rồi chạy lại `python3 build_tool.py`.
 
 | File | Công dụng |
 |---|---|
-| `so-dep.html` | ⭐ Công cụ chính — mở là chạy (đã chứa sẵn ảnh nền) |
-| `build_tool.py` | Tạo lại `so-dep.html` (đổi ảnh nền / mật khẩu) |
+| `index.html` | ⭐ Công cụ chính — mở là chạy (đã chứa sẵn ảnh nền) |
+| `build_tool.py` | Tạo lại `index.html` (đổi ảnh nền / mật khẩu) |
 | `fill_poster.py` | Bản Python dự phòng, chạy hàng loạt |
 | `poster_filled.png` / `@2x` / `.pdf` | Poster mẫu theo định dạng mới |
 | `bckground.png` | Ảnh nền poster gốc |

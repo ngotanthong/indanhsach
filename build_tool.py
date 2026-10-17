@@ -9,7 +9,7 @@ Muon doi anh nen: thay file bckground.png roi chay lai lenh tren.
 import base64, pathlib
 
 BG = "bckground.png"
-OUT = "so-dep.html"
+OUT = "index.html"
 PASSWORD = "ngotanthong"      # <-- doi mat khau o day
 
 TEMPLATE = r"""<!DOCTYPE html>
@@ -77,6 +77,15 @@ TEMPLATE = r"""<!DOCTYPE html>
         font-size:calc(var(--fs) * 0.06906cqw)}
   .cell.sdt{color:var(--sdt)}
   .cell.ck{color:var(--ck)}
+  @media (max-width: 760px){
+    #app{flex-direction:column;padding:12px;gap:14px}
+    .panel{width:100%;flex:0 0 auto;position:static}
+    .stage{width:100%}
+    textarea{height:180px}
+    .opts{gap:10px}
+    input[type=number]{width:56px}
+    #lock .box{width:90%;max-width:340px;padding:28px 22px}
+  }
   @media print{
     @page{size:1448px 1086px;margin:0}
     body{background:#fff}
