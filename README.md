@@ -4,6 +4,8 @@ Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp Vi
 
 ## Cách dùng nhanh nhất — `index.html`
 
+> ⚠️ `index.html` và `bckground.png` phải ở **cùng thư mục** (ảnh nền được tải riêng, không nhúng trong file HTML nữa — để Safari iPhone tải được ảnh).
+
 1. **Nhấp đôi** vào `index.html` → mở bằng Chrome (chạy offline, không cần mạng).
 2. Nhập **mật khẩu** `ngotanthong` → vào công cụ.
 3. **Dán danh sách** vào ô bên trái → poster tự điền ngay.

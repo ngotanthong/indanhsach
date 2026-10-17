@@ -136,7 +136,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 
   <div class="stage">
     <div class="poster" id="poster">
-      <img id="bg" src="__BG__" alt="poster">
+      <img id="bg" src="bckground.png" alt="poster">
     </div>
   </div>
   </div><!-- /#app -->
@@ -244,28 +244,32 @@ $("print").addEventListener("click", () => window.print());
 $("png").addEventListener("click", async () => {
   const img = $("bg");
   try { await img.decode(); } catch(e) {}
-  const s = 2;
-  const c = document.createElement("canvas");
-  c.width = W * s; c.height = H * s;
-  const ctx = c.getContext("2d");
-  ctx.drawImage(img, 0, 0, c.width, c.height);
-  const fs = (+$("fs").value || 31) * s;
-  ctx.font = "bold " + fs + "px Arial";
-  ctx.textAlign = "center"; ctx.textBaseline = "middle";
-  const cSdt = getComputedStyle(document.documentElement).getPropertyValue("--sdt").trim();
-  const cCk  = getComputedStyle(document.documentElement).getPropertyValue("--ck").trim();
-  DATA.forEach((row, i) => {
-    const stt = i + 1; if (stt > 30) return;
-    const bi = stt <= 10 ? 0 : stt <= 20 ? 1 : 2;
-    const b = BLOCKS[bi];
-    const y = ROW_Y[stt - b.start] * s;
-    ctx.fillStyle = cSdt; ctx.fillText(row[0], b.xSdt * s, y);
-    ctx.fillStyle = cCk;  ctx.fillText(row[1], b.xCk  * s, y);
-  });
-  const a = document.createElement("a");
-  a.href = c.toDataURL("image/png");
-  a.download = "so-dep-vinaphone.png";
-  a.click();
+  try {
+    const s = 2;
+    const c = document.createElement("canvas");
+    c.width = W * s; c.height = H * s;
+    const ctx = c.getContext("2d");
+    ctx.drawImage(img, 0, 0, c.width, c.height);
+    const fs = (+$("fs").value || 31) * s;
+    ctx.font = "bold " + fs + "px Arial";
+    ctx.textAlign = "center"; ctx.textBaseline = "middle";
+    const cSdt = getComputedStyle(document.documentElement).getPropertyValue("--sdt").trim();
+    const cCk  = getComputedStyle(document.documentElement).getPropertyValue("--ck").trim();
+    DATA.forEach((row, i) => {
+      const stt = i + 1; if (stt > 30) return;
+      const bi = stt <= 10 ? 0 : stt <= 20 ? 1 : 2;
+      const b = BLOCKS[bi];
+      const y = ROW_Y[stt - b.start] * s;
+      ctx.fillStyle = cSdt; ctx.fillText(row[0], b.xSdt * s, y);
+      ctx.fillStyle = cCk;  ctx.fillText(row[1], b.xCk  * s, y);
+    });
+    const a = document.createElement("a");
+    a.href = c.toDataURL("image/png");
+    a.download = "so-dep-vinaphone.png";
+    a.click();
+  } catch(err){
+    alert("T\u1ea3i PNG ch\u1ec9 ho\u1ea1t \u0111\u1ed9ng khi m\u1edf qua web (Vercel).\nKhi m\u1edf file tr\u1ef1c ti\u1ebfp, d\u00f9ng \"In / L\u01b0u PDF\" thay th\u1ebf.");
+  }
 });
 
 /* ---- man hinh mat khau ---- */
@@ -302,16 +306,14 @@ $("restore").addEventListener("click", () => {
 
 def main():
     import html as _html, re
-    data = base64.b64encode(pathlib.Path(BG).read_bytes()).decode()
     pw   = base64.b64encode(PASSWORD.encode()).decode()
-    html = (TEMPLATE
-            .replace("__BG__", "data:image/png;base64," + data)
-            .replace("__PW__", pw))
+    html = TEMPLATE.replace("__PW__", pw)
     # Giai ma HTML entity + \uXXXX de file de doc/chinh sua bang tieng Viet
     html = _html.unescape(html)
     html = re.sub(r"\\u([0-9a-fA-F]{4})", lambda m: chr(int(m.group(1), 16)), html)
     pathlib.Path(OUT).write_text(html, encoding="utf-8")
-    print(f"da tao {OUT}  ({len(html)/1e6:.1f} MB, 1 file duy nhat)  |  mat khau: {PASSWORD}")
+    print(f"da tao {OUT}  ({len(html)/1e3:.0f} KB)  |  mat khau: {PASSWORD}")
+    print("Luu y: index.html can file bckground.png cung thu muc de hien thi anh nen.")
 
 
 if __name__ == "__main__":
