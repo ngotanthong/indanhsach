@@ -16,7 +16,7 @@ TEMPLATE = r"""<!DOCTYPE html>
 <html lang="vi">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <title>Số đẹp VinaPhone - Điền nhanh</title>
 <style>
   :root{ --sdt:#122342; --ck:#c0201a; }
@@ -35,7 +35,7 @@ TEMPLATE = r"""<!DOCTYPE html>
   #lock .box h2{font-size:19px;margin:12px 0 4px;color:#0a3c78}
   #lock .box p.sub{font-size:12.5px;color:#6b7a8d;margin-bottom:18px}
   #lock .box input{width:100%;padding:12px 14px;border:1.5px solid #c7d4e4;border-radius:10px;
-        font-size:15px;outline:none;text-align:center}
+        font-size:16px;outline:none;text-align:center}
   #lock .box input:focus{border-color:#1a6fd4;box-shadow:0 0 0 3px #1a6fd422}
   #lock .box button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;
         background:#1a6fd4;color:#fff;font-size:15px;font-weight:700;cursor:pointer}
@@ -81,9 +81,9 @@ TEMPLATE = r"""<!DOCTYPE html>
     #app{flex-direction:column;padding:12px;gap:14px}
     .panel{width:100%;flex:0 0 auto;position:static}
     .stage{width:100%}
-    textarea{height:180px}
+    textarea{height:180px;font-size:16px}
     .opts{gap:10px}
-    input[type=number]{width:56px}
+    input[type=number]{width:56px;font-size:16px}
     #lock .box{width:90%;max-width:340px;padding:28px 22px}
   }
   @media print{
