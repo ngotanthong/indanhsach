@@ -101,23 +101,23 @@ TEMPLATE = r"""<!DOCTYPE html>
   <div id="lock">
     <form class="box" id="lockForm" autocomplete="off">
       <div class="ic">&#128274;</div>
-      <h2>Nh&#7853;p m&#7853;t kh&#7849;u</h2>
-      <p class="sub">C&ocirc;ng c&#7909; &#273;i&#7873;n poster S&#7889; &#272;&#7864;P VinaPhone</p>
+      <h2>Thông xin chào</h2>
+      <p class="sub">Mời anh chị nhập code để truy cập Tool nhé</p>
       <input type="password" id="pw" placeholder="M&#7853;t kh&#7849;u" autofocus>
-      <button type="submit">M&#7903;</button>
+      <button type="submit">Ok let's go</button>
       <div class="err" id="err"></div>
     </form>
   </div>
 
   <div id="app">
   <div class="panel">
-    <h1>&#272;i&#7873;n s&#7889; v&agrave;o poster</h1>
-    <p class="hint">D&aacute;n danh s&aacute;ch t&#7915; Excel / Google Sheets ho&#7863;c g&otilde; tay.
-      M&#7895;i d&ograve;ng 1 s&#7889;, 2 c&#7897;t c&aacute;ch nhau b&#7857;ng Tab, v&iacute; d&#7909;:
-      <br><code>0846 74 7979&#9;800k</code><br>
-      N&#7897;i dung &#273;&#432;&#7907;c gi&#7919; <b>y nguy&ecirc;n</b> nh&#432; anh g&otilde;
-      (d&#7845;u c&aacute;ch trong s&#7889;, ch&#7919; &ldquo;k&rdquo;, d&#7845;u ch&#7845;m...).
-      C&oacute; th&#7875; th&ecirc;m c&#7897;t STT &#7903; &#273;&#7847;u c&#361;ng &#273;&#432;&#7907;c.</p>
+    <h1>Tools tạo danh sách số</h1>
+    <p class="hint">Dán danh sách từ Excel / Google Sheets hoặc gõ tay.
+      Mỗi dòng 1 số, 2 cột cách nhau bằng Tab, ví dụ:
+      <br><code>0846 74 7979&#9;800k</code>
+      <br>
+      <br>
+    </p>
     <textarea id="inp" spellcheck="false" placeholder=""></textarea>
     <input type="file" id="file" accept=".csv,.txt,.tsv">
     <div id="restore">&#8617; Kh&ocirc;i ph&#7909;c danh s&aacute;ch v&#7915;a nh&#7853;p</div>
