@@ -6,7 +6,7 @@ Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp Vi
 - Đăng nhập bằng **tên đăng nhập + mật khẩu** (lưu trong Google Sheet).
 - Mỗi user có **danh sách số riêng**, lưu/tải từ Google Sheet.
 - Hiển thị tên user ở góc trên bên phải sau khi đăng nhập.
-- Hai tab: **Quản lý số** (thêm/sửa/xóa list số) và **Nhập số để tạo bảng** (tạo poster).
+- Hai tab: **Quản lý số** (thêm/sửa/xóa list số, kiểm tra trạng thái tự động qua VNPT API) và **Nhập số để tạo bảng** (tạo poster).
 - User demo: `ngotanthong` / `ngotanthong`.
 - Bỏ quản lý user theo ngày hết hạn.
 

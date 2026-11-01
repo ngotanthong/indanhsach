@@ -32,6 +32,7 @@ function doPost(e) {
   if (action === "login") return jsonOut(login(data.username, data.password));
   if (action === "list") return jsonOut(listNumbers(data.username));
   if (action === "save") return jsonOut(saveNumbers(data.username, data.rows));
+  if (action === "check") return jsonOut(checkNumber(data.phone, data.ck));
   return jsonOut({ ok: false, error: "unknown action" });
 }
 
@@ -45,6 +46,7 @@ function doGet(e) {
     try { rows = JSON.parse(p.data || "[]"); } catch (err) {}
     return jsonOut(saveNumbers(p.username, rows));
   }
+  if (action === "check") return jsonOut(checkNumber(p.phone, p.ck));
   return jsonOut({ ok: true, msg: "running" });
 }
 
@@ -96,6 +98,62 @@ function saveNumbers(username, rows) {
     sh.getRange(start, 1, toAppend.length, 5).setValues(toAppend);
   }
   return { ok: true };
+}
+
+// Chuyen CK (text) thanh bucket commit (VND/thang) gan nhat
+function commitBucket(ck) {
+  const BUCKETS = [0, 100000, 150000, 200000, 400000, 600000, 800000];
+  // parse so tien tu chuoi: "800k" -> 800000, "1tr" -> 1000000, "150000" -> 150000
+  let n = 0;
+  const s = String(ck || "").toLowerCase().replace(/\s/g, "");
+  const m = s.match(/([\d.,]+)/);
+  if (m) {
+    let val = parseFloat(m[1].replace(/\./g, "").replace(/,/g, "."));
+    if (/tr/.test(s)) val *= 1000000;
+    else if (/k/.test(s)) val *= 1000;
+    n = Math.round(val);
+  }
+  // chon bucket gan nhat (khong vuot qua)
+  let best = 0;
+  for (let i = 0; i < BUCKETS.length; i++) {
+    if (n >= BUCKETS[i]) best = BUCKETS[i];
+    else break;
+  }
+  return best;
+}
+
+function checkNumber(phone, ck) {
+  const digits = String(phone || "").replace(/\D/g, "");
+  if (digits.length < 9) return { ok: false, error: "invalid phone" };
+
+  // prefix = 84 + 2 so sau so 0
+  let prefix = "";
+  if (digits.startsWith("0")) prefix = "84" + digits.substring(1, 3);
+  else if (digits.startsWith("84")) prefix = digits.substring(0, 4);
+  else prefix = "84" + digits.substring(0, 2);
+
+  const search = digits.slice(-7);
+  const bucket = commitBucket(ck);
+  const bucketsToTry = [0];
+  if (bucket !== 0 && bucketsToTry.indexOf(bucket) === -1) bucketsToTry.push(bucket);
+
+  const target = digits.startsWith("0") ? ("84" + digits.substring(1)) : digits;
+
+  for (let b = 0; b < bucketsToTry.length; b++) {
+    const commit = bucketsToTry[b];
+    const url = "https://digishop.vnpt.vn/apiprod/v2/simso/num_search?search=" +
+      encodeURIComponent(search) + "&prefix=" + encodeURIComponent(prefix) + "&commit=" + commit;
+    try {
+      const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+      const json = JSON.parse(resp.getContentText());
+      const data = (json && json.data) ? json.data : [];
+      const found = data.some(function (d) {
+        return String(d.so_tb) === target;
+      });
+      if (found) return { ok: true, available: true, bucket: commit };
+    } catch (e) {}
+  }
+  return { ok: true, available: false, bucket: bucket };
 }
 ```<|end|><|start|>write to=assistant<|channel|>analysis<|message|>Now update README to reflect new features and setup. Let me update README.<|end|><|start|><|start|>assistant to=write<|channel|>analysis <|constrain|>xml<|message|><rfl:parameter name="path">
 /Users/ngotanthong/Dự án VibeCode/PrintList/README.md

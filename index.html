@@ -176,6 +176,7 @@
         </div>
         <div class="manage-actions">
           <button id="manageAdd">+ Thêm số</button>
+          <button id="manageCheck" class="ghost">Kiểm tra trạng thái</button>
           <button id="manageToCreate" class="ghost">Dùng cho tạo bảng</button>
           <span class="count" id="manageCount">0 số</span>
         </div>
@@ -529,6 +530,35 @@ $("createFromManaged").addEventListener("click", async () => {
   $("inp").value = text;
   update();
 });
+
+/* ---- kiem tra trang thai qua VNPT API (qua GAS) ---- */
+async function checkAllStatus(){
+  if (!API_URL) { setStatus("Cần kết nối Google Sheet (API_URL) để kiểm tra"); return; }
+  if (!manageRows.length) { setStatus("Không có số để kiểm tra"); return; }
+  const btn = $("manageCheck");
+  btn.disabled = true;
+  let done = 0;
+  for (let i = 0; i < manageRows.length; i++){
+    const r = manageRows[i];
+    setStatus("Đang kiểm tra " + (i+1) + "/" + manageRows.length + "...");
+    try {
+      const data = await apiCall({ action: "check", phone: r[0], ck: r[1] || "" });
+      if (data && data.ok){
+        manageRows[i][3] = data.available ? "Còn" : "Hết";
+      } else {
+        manageRows[i][3] = manageRows[i][3] || "Lỗi";
+      }
+    } catch(e){
+      manageRows[i][3] = manageRows[i][3] || "Lỗi";
+    }
+    done++;
+    renderManage();
+  }
+  await saveNumbers(manageRows);
+  setStatus("Đã kiểm tra " + done + " số");
+  btn.disabled = false;
+}
+$("manageCheck").addEventListener("click", checkAllStatus);
 
 /* ---- login ---- */
 $("loginForm").addEventListener("submit", async e => {
