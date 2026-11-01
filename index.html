@@ -177,6 +177,9 @@
           <span class="count" id="manageCount">0 số</span>
         </div>
         <div class="status" id="manageStatus"></div>
+        <div id="checkProgress" style="display:none;margin-top:6px;height:8px;background:#e8effa;border-radius:4px;overflow:hidden">
+          <div id="checkProgressBar" style="height:100%;width:0%;background:#1a6fd4;transition:width .2s"></div>
+        </div>
         <table class="mtable">
           <thead><tr><th style="width:40px">STT</th><th>Số thuê bao</th><th>CK gốc</th><th>CK mới</th><th>Trạng thái</th><th style="width:70px">Xóa</th></tr></thead>
           <tbody id="manageTbody"></tbody>
@@ -623,8 +626,10 @@ $("syncAvailable").addEventListener("click", () => {
 async function checkAllStatus(){
   if (!apiEnabled) { setStatus("Đang ở chế độ demo (không kết nối được GAS)"); return; }
   if (!manageRows.length) { setStatus("Không có số để kiểm tra"); return; }
-  const btn = $("manageCheck");
-  btn.disabled = true;
+  const bar = $("checkProgress");
+  const barFill = $("checkProgressBar");
+  if (bar) bar.style.display = "block";
+  if (barFill) barFill.style.width = "0%";
   let done = 0;
   for (let i = 0; i < manageRows.length; i++){
     const r = manageRows[i];
@@ -641,13 +646,14 @@ async function checkAllStatus(){
       setStatus("Lỗi: " + e.message);
     }
     done++;
+    if (barFill) barFill.style.width = Math.round((done / manageRows.length) * 100) + "%";
     renderManage();
   }
   await saveNumbers(manageRows);
   renderManage();
   syncAvailableToCreate();
   setStatus("Đã kiểm tra " + done + " số");
-  btn.disabled = false;
+  if (bar) setTimeout(() => { bar.style.display = "none"; }, 1200);
 }
 // tu dong check khi vao web + dinh ky 15 phut
 let checkTimer = null;
