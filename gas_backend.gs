@@ -285,7 +285,7 @@ function listReferrers() {
     out.push({ username: un, ten: ten });
   }
   out.sort(function (a, b) { return a.ten.localeCompare(b.ten, "vi"); });
-  return { ok: true, users: out };
+  return { ok: true, version: 2, users: out };
 }
 
 function registerUser(username, password, ten, ref) {
@@ -327,7 +327,7 @@ function registerUser(username, password, ten, ref) {
     }
   }
 
-  return { ok: true, ten: ten || username, limit_list: limitList, limit_check: limitCheck,
+  return { ok: true, version: 2, ten: ten || username, limit_list: limitList, limit_check: limitCheck,
     expiry: toDMY(exp), expiry_iso: exp, days: days,
     referrer: refInfo };
 }

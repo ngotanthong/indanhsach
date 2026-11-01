@@ -293,6 +293,7 @@ let registerMode = false;
 let userLimits = { list: 3, check: 10 };
 let userExpiry = "";
 let registerNotice = "";
+let referrersFromSheet = false;
 let manageRows = [];
 
 const $ = id => document.getElementById(id);
@@ -890,6 +891,7 @@ async function loadReferrers(){
     const data = await apiCall({ action: "referrers" });
     if (data && data.ok && Array.isArray(data.users) && data.users.length){
       render(data.users);
+      referrersFromSheet = true;
     }
   } catch(e){ /* giu danh sach local */ }
 }
@@ -933,6 +935,9 @@ $("loginForm").addEventListener("submit", async e => {
             registerNotice += data.referrer.unlimited
               ? " Người giới thiệu (" + esc(data.referrer.ten) + ") không giới hạn ngày."
               : " Đã cộng thêm 30 ngày cho người giới thiệu (" + esc(data.referrer.ten) + ").";
+          }
+          if (ref && !(data.version >= 2) && data.referrer === undefined){
+            registerNotice += " ⚠️ GAS đang là bản CŨ nên chưa áp dụng người giới thiệu (chưa được +10 số/+30 ngày). Cần Deploy phiên bản mới.";
           }
         }
         else { doLogin._err = data && data.error === "exists" ? "Tài khoản đã tồn tại" : "Đăng ký thất bại"; }
