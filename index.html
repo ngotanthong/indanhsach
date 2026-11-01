@@ -176,7 +176,7 @@
   .manage-grid label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
   .manage-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}
   .manage-actions button{flex:0 0 auto;min-width:110px}
-  table.mtable{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+  table.mtable{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;min-width:620px}
   table.mtable th,table.mtable td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left}
   table.mtable th{background:#f9fafb;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
   table.mtable tbody tr:hover{background:#fafbfc}
@@ -325,10 +325,12 @@
         <div style="margin-top:6px">
           <button id="lastCheckBtn" class="ghost" style="flex:0 0 auto;min-width:0;padding:4px 10px;font-size:12px">Lần check cuối: chưa có</button>
         </div>
+        <div style="overflow-x:auto">
         <table class="mtable">
           <thead><tr><th style="width:40px">STT</th><th>Số thuê bao</th><th>CK gốc</th><th>CK mới</th><th>Trạng thái</th><th style="width:70px">Xóa</th></tr></thead>
           <tbody id="manageTbody"></tbody>
         </table>
+        </div>
 
         <div class="bulk">
           <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
