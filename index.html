@@ -287,6 +287,15 @@
     <div id="tab-manage" class="tabpane active">
       <div class="manage-box">
         <h2>Quản lý số của bạn</h2>
+        <div id="addTabBulk">
+          <div class="bulk-card">
+            <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
+            <textarea id="mBulk" spellcheck="false" placeholder="0846 74 7979	1500k"></textarea>
+            <div class="manage-actions">
+              <button id="manageImport" class="ghost">Nhập từ text</button>
+            </div>
+          </div>
+        </div>
         <div class="stats-card" id="statsCard">
           <div class="stats-grid">
             <div class="stat-tile"><div class="stat-label">Tổng số</div><div class="stat-value" id="statTotal">0</div></div>
@@ -357,16 +366,6 @@
         </table>
         </div>
         <div id="manageCards" class="manage-cards"></div>
-
-        <div id="addTabBulk">
-          <div class="bulk-card">
-            <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
-            <textarea id="mBulk" spellcheck="false" placeholder="0846 74 7979	1500k"></textarea>
-            <div class="manage-actions">
-              <button id="manageImport" class="ghost">Nhập từ text</button>
-            </div>
-          </div>
-        </div>
 
         <div style="margin-top:14px">
           <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Xem trước poster (chỉ số còn)</h2>
