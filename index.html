@@ -246,6 +246,7 @@
 /* ================= CONFIG ================= */
 // Dán URL Web App của Google Apps Script (deploy) vào đây. Để trống = chế độ demo (lưu trong trình duyệt).
 const API_URL = "https://script.google.com/macros/s/AKfycbwY1hZr42h-0rDr8NNsDPp0MuwnEEYNtfPtHDF5iwReA-pJ3i-kspNfbVVI5AInXZ3r7w/exec";
+let apiEnabled = !!API_URL;
 const DEMO_USERS = { "ngotanthong": { password: "ngotanthong", ten: "ngotanthong" } };
 
 const W = 1448, H = 1086;
@@ -294,12 +295,21 @@ async function apiCall(payload){
 }
 
 async function doLogin(username, password){
-  if (API_URL){
+  if (apiEnabled){
     try {
       const data = await apiCall({ action: "login", username, password });
       if (data && data.ok){ currentUser = username; currentTen = data.ten || username; return true; }
       return false;
-    } catch(e){ doLogin._err = e.message; return false; }
+    } catch(e){
+      doLogin._err = e.message;
+      // fallback demo neu GAS chua public
+      const u = getUsersLocal();
+      if (u[username] && u[username].password === password){
+        apiEnabled = false;
+        currentUser = username; currentTen = u[username].ten || username; return true;
+      }
+      return false;
+    }
   } else {
     const u = getUsersLocal();
     if (u[username] && u[username].password === password){
@@ -310,7 +320,7 @@ async function doLogin(username, password){
 }
 
 async function loadNumbers(){
-  if (API_URL){
+  if (apiEnabled){
     try {
       const data = await apiCall({ action: "list", username: currentUser });
       return (data && data.rows) ? data.rows : [];
@@ -321,7 +331,7 @@ async function loadNumbers(){
 }
 
 async function saveNumbers(rows){
-  if (API_URL){
+  if (apiEnabled){
     try { await apiCall({ action: "save", username: currentUser, rows: rows }); } catch(e){}
   } else {
     try { localStorage.setItem(manageKey(currentUser), JSON.stringify(rows)); } catch(e){}
@@ -611,7 +621,7 @@ $("syncAvailable").addEventListener("click", () => {
 
 /* ---- kiem tra trang thai qua VNPT API (qua GAS) ---- */
 async function checkAllStatus(){
-  if (!API_URL) { setStatus("Cần kết nối Google Sheet (API_URL) để kiểm tra"); return; }
+  if (!apiEnabled) { setStatus("Đang ở chế độ demo (không kết nối được GAS)"); return; }
   if (!manageRows.length) { setStatus("Không có số để kiểm tra"); return; }
   const btn = $("manageCheck");
   btn.disabled = true;
