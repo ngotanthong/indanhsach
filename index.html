@@ -16,13 +16,19 @@
         background:linear-gradient(160deg,#0a3c78,#1a6fd4 55%,#2ea3f2)}
   body.open #lock{display:none}
   #lock .box{background:#fff;border-radius:18px;padding:34px 32px;width:360px;text-align:center;
-        box-shadow:0 20px 50px rgba(0,20,50,.4)}
+        box-shadow:0 20px 50px rgba(0,20,50,.4);max-height:92vh;overflow-y:auto}
   #lock .box .ic{font-size:40px;line-height:1}
   #lock .box h2{font-size:19px;margin:12px 0 4px;color:#0a3c78}
   #lock .box p.sub{font-size:12.5px;color:#6b7a8d;margin-bottom:18px}
   #lock .box input{width:100%;padding:12px 14px;border:1.5px solid #c7d4e4;border-radius:10px;
         font-size:16px;outline:none;margin-top:8px}
   #lock .box input:focus{border-color:#1a6fd4;box-shadow:0 0 0 3px #1a6fd422}
+  #lock .box select{width:100%;padding:12px 14px;border:1.5px solid #c7d4e4;border-radius:10px;
+        font-size:15px;outline:none;margin-top:8px;background:#fff;color:#1b2735;appearance:auto}
+  #lock .box select:focus{border-color:#1a6fd4;box-shadow:0 0 0 3px #1a6fd422}
+  #lock .box .reg-note{font-size:12px;line-height:1.6;color:#0a3c78;background:#eef6ff;
+        border:1px solid #cfe3fa;border-radius:10px;padding:10px 12px;margin-top:10px;text-align:left}
+  #lock .box .reg-note b{color:#1a6fd4}
   #lock .box button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;
         background:#1a6fd4;color:#fff;font-size:15px;font-weight:700;cursor:pointer}
   #lock .box button:hover{filter:brightness(1.07)}
@@ -30,6 +36,11 @@
   #lock .err{color:#c0201a;font-size:12.5px;font-weight:700;margin-top:10px;min-height:16px}
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
   .shake{animation:shake .28s}
+  #toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(16px);
+        background:#0a3c78;color:#fff;padding:12px 18px;border-radius:12px;font-size:13px;line-height:1.6;
+        box-shadow:0 12px 34px rgba(0,20,50,.35);opacity:0;pointer-events:none;transition:.25s;
+        z-index:200;max-width:92%;text-align:left}
+  #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
   /* ---- top bar ---- */
   #topbar{display:flex;align-items:center;justify-content:space-between;background:#fff;
@@ -135,6 +146,16 @@
       <input type="text" id="loginUser" placeholder="Tên đăng nhập" autofocus>
       <input type="password" id="loginPass" placeholder="Mật khẩu">
       <input type="text" id="regTen" placeholder="Tên hiển thị (đăng ký)" style="display:none">
+      <label id="regRefLabel" style="display:none;font-size:12px;color:#6b7a8d;text-align:left;margin-top:12px">Người giới thiệu (không bắt buộc)</label>
+      <select id="regRef" style="display:none">
+        <option value="">— Không có người giới thiệu —</option>
+      </select>
+      <div class="reg-note" id="regNote" style="display:none">
+        <b>🎁 Quyền lợi khi đăng ký</b><br>
+        • Không nhập người giới thiệu: dùng thử <b>3 ngày</b>, tối đa <b>3 số</b>.<br>
+        • Có người giới thiệu: bạn được <b>30 ngày</b>, tối đa <b>10 số</b>.<br>
+        • Người giới thiệu cũng được <b>cộng thêm 30 ngày</b> sử dụng.
+      </div>
       <button type="submit" id="loginBtn">Ok let's go</button>
       <div class="err" id="loginErr"></div>
       <p style="margin-top:10px;font-size:12px"><a href="#" id="toggleAuth" style="color:#1a6fd4;font-weight:700;text-decoration:none">Chưa có tài khoản? Đăng ký</a></p>
@@ -271,6 +292,7 @@ let currentTen = null;
 let registerMode = false;
 let userLimits = { list: 3, check: 10 };
 let userExpiry = "";
+let registerNotice = "";
 let manageRows = [];
 
 const $ = id => document.getElementById(id);
@@ -469,6 +491,21 @@ function isExpired(exp){
   if (!iso) return false;
   return todayISO() > iso;
 }
+function addDaysISO(iso, n){
+  const p = parseDateISO(iso);
+  if (!p) return "";
+  const a = p.split("-").map(Number);
+  const d = new Date(Date.UTC(a[0], a[1] - 1, a[2]));
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.getUTCFullYear() + "-" + ("0"+(d.getUTCMonth()+1)).slice(-2) + "-" + ("0"+d.getUTCDate()).slice(-2);
+}
+function daysLeft(exp){
+  const iso = parseDateISO(exp);
+  if (!iso) return null;
+  const a = new Date(iso + "T00:00:00Z").getTime();
+  const b = new Date(todayISO() + "T00:00:00Z").getTime();
+  return Math.round((a - b) / 86400000);
+}
 function fmtDMY(v){
   const iso = parseDateISO(v);
   if (!iso) return String(v || "");
@@ -577,7 +614,7 @@ async function loadManage(){
   setStatus("Đã tải " + manageRows.length + " số");
   // thong tin gioi han (chi hien thi, sua trong Sheet)
   const info = $("limitsInfo");
-  if (info) info.textContent = "Giới hạn: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + fmtDMY(userExpiry) : "");
+  if (info) info.textContent = "Giới hạn: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : "") : "");
 }
 
 function isAvailableStatus(v){
@@ -819,6 +856,44 @@ document.addEventListener("visibilitychange", () => {
 });
 
 /* ---- chuyen dang nhap / dang ky ---- */
+let toastTimer = null;
+function showToast(msg, ms){
+  const t = $("toast");
+  if (!t) return;
+  t.innerHTML = msg;
+  t.classList.add("show");
+  if (toastTimer) clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove("show"), ms || 6000);
+}
+
+async function loadReferrers(){
+  const sel = $("regRef");
+  if (!sel) return;
+  const keep = sel.value;
+  const render = (list) => {
+    sel.innerHTML = '<option value="">— Không có người giới thiệu —</option>';
+    list.sort((a, b) => String(a.ten).localeCompare(String(b.ten), "vi"));
+    list.forEach(u => {
+      const o = document.createElement("option");
+      o.value = u.username;
+      o.textContent = u.ten || u.username;
+      sel.appendChild(o);
+    });
+    if (keep) sel.value = keep;
+  };
+  // hien thi ngay tu du lieu local cho nhanh
+  const users = getUsersLocal();
+  render(Object.keys(users).map(k => ({ username: k, ten: users[k].ten || k })));
+  if (!apiEnabled) return;
+  // roi cap nhat bang danh sach day du tu Google Sheet
+  try {
+    const data = await apiCall({ action: "referrers" });
+    if (data && data.ok && Array.isArray(data.users) && data.users.length){
+      render(data.users);
+    }
+  } catch(e){ /* giu danh sach local */ }
+}
+
 $("toggleAuth").addEventListener("click", e => {
   e.preventDefault();
   registerMode = !registerMode;
@@ -826,8 +901,12 @@ $("toggleAuth").addEventListener("click", e => {
   $("authSub").textContent = registerMode ? "Tạo tài khoản mới" : "Nhập tài khoản để truy cập Tool";
   $("loginBtn").textContent = registerMode ? "Đăng ký" : "Ok let's go";
   $("regTen").style.display = registerMode ? "block" : "none";
+  $("regRefLabel").style.display = registerMode ? "block" : "none";
+  $("regRef").style.display = registerMode ? "block" : "none";
+  $("regNote").style.display = registerMode ? "block" : "none";
   $("toggleAuth").textContent = registerMode ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký";
   $("loginErr").textContent = "";
+  if (registerMode) loadReferrers();
 });
 
 /* ---- login / register ---- */
@@ -840,10 +919,22 @@ $("loginForm").addEventListener("submit", async e => {
   let ok = false;
   if (registerMode){
     const ten = $("regTen").value.trim() || u;
+    const ref = $("regRef").value || "";
     if (apiEnabled){
       try {
-        const data = await apiCall({ action: "register", username: u, password: p, ten: ten });
-        if (data && data.ok){ ok = true; currentUser = u; currentTen = data.ten || ten; userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 }; userExpiry = parseDateISO(data.expiry) || ""; }
+        const data = await apiCall({ action: "register", username: u, password: p, ten: ten, ref: ref });
+        if (data && data.ok){
+          ok = true; currentUser = u; currentTen = data.ten || ten;
+          userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 };
+          userExpiry = parseDateISO(data.expiry) || "";
+          registerNotice = "Đăng ký thành công! Bạn được " +
+            (data.days === 30 ? "30 ngày, tối đa 10 số." : "dùng thử 3 ngày, tối đa 3 số.");
+          if (data.referrer && data.referrer.ok){
+            registerNotice += data.referrer.unlimited
+              ? " Người giới thiệu (" + esc(data.referrer.ten) + ") không giới hạn ngày."
+              : " Đã cộng thêm 30 ngày cho người giới thiệu (" + esc(data.referrer.ten) + ").";
+          }
+        }
         else { doLogin._err = data && data.error === "exists" ? "Tài khoản đã tồn tại" : "Đăng ký thất bại"; }
       } catch(e){ doLogin._err = e.message; }
     } else {
@@ -851,10 +942,24 @@ $("loginForm").addEventListener("submit", async e => {
       const users = getUsersLocal();
       if (users[u]){ doLogin._err = "Tài khoản đã tồn tại"; }
       else {
-        const exp = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,10);
-        users[u] = { password: p, ten: ten, limit_list: 3, limit_check: 10, expiry: exp };
+        const hasRef = !!(ref && users[ref]);
+        const exp = addDaysISO(todayISO(), hasRef ? 30 : 3);
+        users[u] = { password: p, ten: ten, limit_list: hasRef ? 10 : 3, limit_check: 10, expiry: exp, ref: ref };
+        registerNotice = "Đăng ký thành công! Bạn được " +
+          (hasRef ? "30 ngày, tối đa 10 số." : "dùng thử 3 ngày, tối đa 3 số.");
+        if (hasRef){
+          const rr = users[ref];
+          const rExp = parseDateISO(rr.expiry);
+          if (!rExp){
+            registerNotice += " Người giới thiệu (" + esc(rr.ten || ref) + ") không giới hạn ngày.";
+          } else {
+            const base = rExp > todayISO() ? rExp : todayISO();
+            rr.expiry = addDaysISO(base, 30);
+            registerNotice += " Đã cộng thêm 30 ngày cho người giới thiệu (" + esc(rr.ten || ref) + ").";
+          }
+        }
         saveUsersLocal(users);
-        currentUser = u; currentTen = ten; userLimits = { list: 3, check: 10 }; userExpiry = exp; ok = true;
+        currentUser = u; currentTen = ten; userLimits = { list: hasRef ? 10 : 3, check: 10 }; userExpiry = exp; ok = true;
       }
     }
   } else {
@@ -872,6 +977,7 @@ $("loginForm").addEventListener("submit", async e => {
     update();
     const r = (function(){ try { return localStorage.getItem("sodep_list"); } catch(e){ return null; } })();
     if (r && !$("inp").value) { $("restore").classList.add("show"); }
+    if (registerNotice){ showToast(registerNotice, 8000); registerNotice = ""; }
     setTimeout(() => $("inp").focus(), 50);
   } else {
     $("loginErr").textContent = doLogin._err ? doLogin._err : "Sai tên đăng nhập hoặc mật khẩu";
@@ -888,6 +994,17 @@ $("logout").addEventListener("click", () => {
   document.body.classList.remove("open");
   $("loginUser").value = ""; $("loginPass").value = "";
   $("loginErr").textContent = "";
+  if (registerMode){
+    registerMode = false;
+    $("authTitle").textContent = "Đăng nhập";
+    $("authSub").textContent = "Nhập tài khoản để truy cập Tool";
+    $("loginBtn").textContent = "Ok let's go";
+    $("regTen").style.display = "none";
+    $("regRefLabel").style.display = "none";
+    $("regRef").style.display = "none";
+    $("regNote").style.display = "none";
+    $("toggleAuth").textContent = "Chưa có tài khoản? Đăng ký";
+  }
 });
 
 $("restore").addEventListener("click", () => {
@@ -900,5 +1017,6 @@ $("inp").placeholder = "0846 74 7979\t800k\n0822 88 8085\t150k";
 $("inp").value = "";
 update();
 </script>
+<div id="toast"></div>
 </body>
 </html>

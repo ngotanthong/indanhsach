@@ -4,6 +4,10 @@ Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp Vi
 
 ## Tính năng mới
 - Đăng nhập / **đăng ký** tài khoản (lưu trong Google Sheet).
+- **Người giới thiệu (MGT)**: khi đăng ký chọn tên từ cột `ten`.
+  - Có MGT: người mới được **30 ngày + 10 số**, người giới thiệu được **cộng thêm 30 ngày**.
+  - Không có MGT: dùng thử **3 ngày + 3 số**.
+  - Người giới thiệu không giới hạn ngày thì giữ nguyên (không bị giảm).
 - Giới hạn số lượng số trong danh sách (mặc định 3) và số lần check/ngày (đặt "không giới hạn" = ∞).
 - Mỗi user có **danh sách số riêng**, lưu/tải từ Google Sheet.
 - Hiển thị tên user ở góc trên bên phải sau khi đăng nhập.
@@ -39,6 +43,7 @@ Mặc định `API_URL = ""` trong `index.html`: dữ liệu lưu trong trình d
 ### Cấu trúc Google Sheet
 - Sheet `Users`: A = username, B = password, C = tên, D = limit_list, E = limit_check, F = checks_today, G = last_check_date, H = expiry_date. (Giới hạn & hạn dùng chỉnh trực tiếp trong sheet.)
   - `expiry_date` nhận mọi định dạng: ô Date của Sheet, `21/10/2026`, `2026-10-21`, hoặc chuỗi `Sat Oct 31 2026...`. Để **trống = không hết hạn**. Quá ngày này → tài khoản bị khóa (không đăng nhập được, không check được).
+  - Cột C `ten` chính là danh sách hiển thị trong ô **Người giới thiệu** khi đăng ký.
 - Sheet `Numbers`: cột A = username, B = số thuê bao, C = cam kết gốc, D = cam kết mới, E = trạng thái.
 
 ## Các file trong repo

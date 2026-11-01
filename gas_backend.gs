@@ -35,7 +35,8 @@ function doPost(e) {
   if (action === "list") return jsonOut(listNumbers(data.username));
   if (action === "save") return jsonOut(saveNumbers(data.username, data.rows));
   if (action === "check") return jsonOut(checkNumber(data.phone, data.ck));
-  if (action === "register") return jsonOut(registerUser(data.username, data.password, data.ten));
+  if (action === "register") return jsonOut(registerUser(data.username, data.password, data.ten, data.ref));
+  if (action === "referrers") return jsonOut(listReferrers());
   if (action === "beginCheck") return jsonOut(beginCheck(data.username));
   return jsonOut({ ok: false, error: "unknown action" });
 }
@@ -51,7 +52,8 @@ function doGet(e) {
     return jsonOut(saveNumbers(p.username, rows));
   }
   if (action === "check") return jsonOut(checkNumber(p.phone, p.ck));
-  if (action === "register") return jsonOut(registerUser(p.username, p.password, p.ten));
+  if (action === "register") return jsonOut(registerUser(p.username, p.password, p.ten, p.ref));
+  if (action === "referrers") return jsonOut(listReferrers());
   if (action === "beginCheck") return jsonOut(beginCheck(p.username));
   return jsonOut({ ok: true, msg: "running" });
 }
@@ -241,9 +243,55 @@ function checkNumber(phone, ck) {
   return { ok: true, available: false, bucket: bucket };
 }
 
-function registerUser(username, password, ten) {
+function pad2(n) { return ("0" + n).slice(-2); }
+
+// Cong n ngay vao ngay yyyy-MM-dd (tinh theo UTC de khong lech mui gio)
+function addDaysISO(iso, n) {
+  const m = String(iso || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  const d = new Date(Date.UTC(parseInt(m[1], 10), parseInt(m[2], 10) - 1, parseInt(m[3], 10)));
+  d.setUTCDate(d.getUTCDate() + n);
+  return d.getUTCFullYear() + "-" + pad2(d.getUTCMonth() + 1) + "-" + pad2(d.getUTCDate());
+}
+
+function todayISO() {
+  return Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+}
+
+// Tim dong user theo username hoac ten (khong phan biet hoa thuong)
+function findUserIndex(rows, key) {
+  key = String(key || "").trim().toLowerCase();
+  if (!key) return -1;
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim().toLowerCase() === key) return i;
+  }
+  for (let i = 1; i < rows.length; i++) {
+    if (String(padUser(rows[i])[2]).trim().toLowerCase() === key) return i;
+  }
+  return -1;
+}
+
+// Danh sach nguoi gioi thieu (lay tu cot ten) de do vao o chon
+function listReferrers() {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sh = ss.getSheetByName(USERS_SHEET);
+  const rows = sh.getDataRange().getValues();
+  const out = [];
+  for (let i = 1; i < rows.length; i++) {
+    const r = padUser(rows[i]);
+    const un = String(r[0]).trim();
+    if (!un) continue;
+    const ten = String(r[2]).trim() || un;
+    out.push({ username: un, ten: ten });
+  }
+  out.sort(function (a, b) { return a.ten.localeCompare(b.ten, "vi"); });
+  return { ok: true, users: out };
+}
+
+function registerUser(username, password, ten, ref) {
   username = String(username || "").trim();
   password = String(password || "");
+  ref = String(ref || "").trim();
   if (!username || !password) return { ok: false, error: "missing" };
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const sh = ss.getSheetByName(USERS_SHEET);
@@ -251,9 +299,37 @@ function registerUser(username, password, ten) {
   for (let i = 1; i < rows.length; i++) {
     if (String(rows[i][0]).trim() === username) return { ok: false, error: "exists" };
   }
-  const exp = Utilities.formatDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), Session.getScriptTimeZone(), "yyyy-MM-dd");
-  sh.appendRow([username, password, ten || username, 3, 10, 0, "", exp]);
-  return { ok: true, ten: ten || username, limit_list: 3, limit_check: 10, expiry: toDMY(exp), expiry_iso: exp };
+
+  const today = todayISO();
+  const refIdx = findUserIndex(rows, ref);
+  const hasRef = refIdx !== -1;
+  const days = hasRef ? 30 : 3;
+  const limitList = hasRef ? 10 : 3;
+  const limitCheck = 10;
+  const exp = addDaysISO(today, days);
+
+  sh.appendRow([username, password, ten || username, limitList, limitCheck, 0, "", exp]);
+
+  // Cong 30 ngay cho nguoi gioi thieu
+  let refInfo = { ok: false };
+  if (hasRef) {
+    const rr = padUser(rows[refIdx]);
+    const refTen = String(rr[2]).trim() || String(rr[0]).trim();
+    const refExp = normDate(rr[7]);
+    if (!refExp) {
+      // nguoi gioi thieu khong gioi han ngay -> giu nguyen
+      refInfo = { ok: true, ten: refTen, unlimited: true, expiry: "" };
+    } else {
+      const base = refExp > today ? refExp : today;
+      const newExp = addDaysISO(base, 30);
+      sh.getRange(refIdx + 1, 8).setValue(newExp);
+      refInfo = { ok: true, ten: refTen, unlimited: false, expiry: toDMY(newExp), expiry_iso: newExp, added_days: 30 };
+    }
+  }
+
+  return { ok: true, ten: ten || username, limit_list: limitList, limit_check: limitCheck,
+    expiry: toDMY(exp), expiry_iso: exp, days: days,
+    referrer: refInfo };
 }
 
 function beginCheck(username) {
