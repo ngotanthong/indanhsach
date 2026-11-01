@@ -14,7 +14,7 @@ Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp Vi
 - Mỗi user có **danh sách số riêng**, lưu/tải từ Google Sheet.
 - Hiển thị tên user ở góc trên bên phải sau khi đăng nhập.
 - Hai tab: **Quản lý số** (thêm/sửa/xóa list số, kiểm tra trạng thái tự động qua VNPT API) và **Nhập số để tạo bảng** (tạo poster).
-- User demo: `ngotanthong` / `ngotanthong`.
+- Trạng thái số trong tab **Quản lý số**: 🟩 Còn (đã check hôm nay, xanh), ⬜ Còn (trạng thái cũ/chưa check hôm nay, xám), 🟥 Hết (đỏ). Chỉ số **Còn** đã check hôm nay mới được điền vào poster.
 - Quản lý **hạn sử dụng tài khoản** trong Sheet (`expiry_date`): quá hạn sẽ không đăng nhập/không check được.
 
 ## Cách dùng nhanh nhất — `index.html`

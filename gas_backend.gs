@@ -21,9 +21,9 @@ function setup() {
   let ns = ss.getSheetByName(NUMBERS_SHEET);
   if (!ns) ns = ss.insertSheet(NUMBERS_SHEET);
   ns.clear();
-  ns.appendRow(["username", "sdt", "ck_goc", "ck_moi", "trang_thai"]);
+  ns.appendRow(["username", "sdt", "ck_goc", "ck_moi", "trang_thai", "checked_at"]);
   // luu sdt/ck dang text de giu so 0 dau va khoang cach ngat nhi
-  ns.getRange(1, 2, ns.getMaxRows(), 4).setNumberFormat("@");
+  ns.getRange(1, 2, ns.getMaxRows(), 5).setNumberFormat("@");
   SpreadsheetApp.flush();
 }
 
@@ -197,27 +197,51 @@ function listNumbers(username) {
   const out = [];
   for (let i = 1; i < rows.length; i++) {
     if (String(rows[i][0]).trim() === String(username).trim()) {
-      out.push([rows[i][1], rows[i][2], rows[i][3], rows[i][4]]);
+      out.push([rows[i][1], rows[i][2], rows[i][3], rows[i][4], numTime(rows[i][5])]);
     }
   }
   return { ok: true, rows: out };
+}
+
+// Chuan hoa thoi diem check (co the la Date object hoac chuoi) ve "yyyy-MM-dd HH:mm"
+function numTime(v) {
+  if (v == null || v === "") return "";
+  if (v instanceof Date) {
+    return Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd HH:mm");
+  }
+  const s = String(v).trim();
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})(?:[T ](\d{2}):(\d{2}))?/);
+  if (m) return m[1] + "-" + m[2] + "-" + m[3] + " " + (m[4] || "00") + ":" + (m[5] || "00");
+  return "";
 }
 
 function saveNumbers(username, rows) {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const sh = ss.getSheetByName(NUMBERS_SHEET);
   const data = sh.getDataRange().getValues();
+  const WIDTH = 6;
+  const padRow = function (r) {
+    const x = (r || []).slice(0, WIDTH);
+    while (x.length < WIDTH) x.push("");
+    return x;
+  };
   // giu lai cac hang khong thuoc user nay
-  const keep = [data[0]];
+  const keep = [];
+  if (data.length) keep.push(padRow(data[0]));
   for (let i = 1; i < data.length; i++) {
-    if (String(data[i][0]).trim() !== String(username).trim()) keep.push(data[i]);
+    if (String(data[i][0]).trim() !== String(username).trim()) keep.push(padRow(data[i]));
   }
   sh.clear();
-  if (keep.length) sh.getRange(1, 1, keep.length, keep[0].length).setValues(keep);
+  if (keep.length) {
+    keep[0][5] = "checked_at";
+    sh.getRange(1, 1, keep.length, WIDTH).setValues(keep);
+  }
   if (rows && rows.length) {
-    const toAppend = rows.map(r => [username, r[0], r[1] || "", r[2] || "", r[3] || ""]);
+    const toAppend = rows.map(function (r) {
+      return [username, r[0], r[1] || "", r[2] || "", r[3] || "", r[4] || ""];
+    });
     const start = sh.getLastRow() + 1;
-    const rng = sh.getRange(start, 1, toAppend.length, 5);
+    const rng = sh.getRange(start, 1, toAppend.length, WIDTH);
     rng.setNumberFormat("@");
     rng.setValues(toAppend);
   }
