@@ -8,7 +8,9 @@ Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp Vi
   - Có MGT: người mới được **30 ngày + 10 số**, người giới thiệu được **cộng thêm 30 ngày**.
   - Không có MGT: dùng thử **3 ngày + 3 số**.
   - Người giới thiệu không giới hạn ngày thì giữ nguyên (không bị giảm).
-- Giới hạn số lượng số trong danh sách (mặc định 3) và **tổng số điện thoại được check mỗi ngày** (mỗi số chỉ tính **1 lần/ngày**, check lại cùng số không trừ thêm; đặt "không giới hạn" = ∞). Cột F `checks_today` lưu số số đã check trong ngày, cột I `checked_today` lưu danh sách số đó và tự reset sang ngày mới.
+- Giới hạn số lượng số trong danh sách (`limit_list`) và **tổng số điện thoại được check mỗi ngày** (`limit_check`, mỗi số chỉ tính **1 lần/ngày**, check lại cùng số không trừ thêm). Để **trống** hoặc ghi "không giới hạn" = ∞. Cột F `checks_today` lưu số số đã check trong ngày, cột I `checked_today` lưu danh sách số đó và tự reset sang ngày mới.
+- Thông tin **giới hạn / số đã check / hạn dùng** hiển thị trên web đọc **trực tiếp từ Google Sheet**, tự cập nhật mỗi 30 giây (và khi quay lại tab). Bấm vào dòng thông tin để cập nhật ngay lập tức, không cần tải lại trang. Sửa cột D/E/H trong Sheet là web đổi theo.
+- Tài khoản hết hạn (theo giờ máy) sẽ **tự đăng xuất** ngay khi web phát hiện.
 - Mỗi user có **danh sách số riêng**, lưu/tải từ Google Sheet.
 - Hiển thị tên user ở góc trên bên phải sau khi đăng nhập.
 - Hai tab: **Quản lý số** (thêm/sửa/xóa list số, kiểm tra trạng thái tự động qua VNPT API) và **Nhập số để tạo bảng** (tạo poster).
@@ -43,6 +45,7 @@ Mặc định `API_URL = ""` trong `index.html`: dữ liệu lưu trong trình d
 ### Cấu trúc Google Sheet
 - Sheet `Users`: A = username, B = password, C = tên, D = limit_list, E = limit_check, F = checks_today (số số đã check hôm nay), G = last_check_date, H = expiry_date, I = checked_today (danh sách số đã check, dạng `2026-11-01|0901...,0902...`; tự tạo khi check lần đầu). (Giới hạn & hạn dùng chỉnh trực tiếp trong sheet.)
   - `expiry_date` nhận mọi định dạng: ô Date của Sheet, `21/10/2026`, `2026-10-21`, hoặc chuỗi `Sat Oct 31 2026...`. Để **trống = không hết hạn**. Quá ngày này → tài khoản bị khóa (không đăng nhập được, không check được).
+  - Ô **trống = không giới hạn (∞)** ở cột D và E.
   - Cột C `ten` chính là danh sách hiển thị trong ô **Người giới thiệu** khi đăng ký.
 - Sheet `Numbers`: cột A = username, B = số thuê bao, C = cam kết gốc, D = cam kết mới, E = trạng thái.
 

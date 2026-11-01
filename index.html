@@ -204,7 +204,7 @@
           <button id="manageToCreate" class="ghost">Dùng cho tạo bảng</button>
           <span class="count" id="manageCount">0 số</span>
         </div>
-        <div class="status" id="limitsInfo"></div>
+        <div class="status" id="limitsInfo" style="cursor:pointer" title="Bấm để cập nhật lại từ Google Sheet"></div>
         <div class="status" id="manageStatus"></div>
         <div id="checkProgress" style="display:none;margin-top:6px;height:8px;background:#e8effa;border-radius:4px;overflow:hidden">
           <div id="checkProgressBar" style="height:100%;width:0%;background:#1a6fd4;transition:width .2s"></div>
@@ -296,7 +296,7 @@ let DATA = [];
 let currentUser = null;
 let currentTen = null;
 let registerMode = false;
-let userLimits = { list: 3, check: 10 };
+let userLimits = { list: Infinity, check: Infinity };
 let userChecksToday = 0;
 let userExpiry = "";
 let registerNotice = "";
@@ -368,7 +368,7 @@ async function doLogin(username, password){
           return false;
         }
         currentUser = username; currentTen = data.ten || username;
-        userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 };
+        userLimits = { list: toLimitNumber(data.limit_list), check: toLimitNumber(data.limit_check) };
         userChecksToday = Number(data.checks_today) || 0;
         userExpiry = parseDateISO(exp) || exp;
         return true;
@@ -390,7 +390,7 @@ async function doLogin(username, password){
         }
         apiEnabled = false;
         currentUser = username; currentTen = u[username].ten || username;
-        userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
+        userLimits = { list: toLimitNumber(u[username].limit_list), check: toLimitNumber(u[username].limit_check) };
         userChecksToday = 0;
         userExpiry = parseDateISO(exp) || exp;
         return true;
@@ -406,7 +406,7 @@ async function doLogin(username, password){
         return false;
       }
       currentUser = username; currentTen = u[username].ten || username;
-      userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
+      userLimits = { list: toLimitNumber(u[username].limit_list), check: toLimitNumber(u[username].limit_check) };
       userChecksToday = 0;
       userExpiry = parseDateISO(exp) || exp;
       return true;
@@ -537,9 +537,16 @@ function daysLeft(exp){
   const b = new Date(todayISO() + "T00:00:00Z").getTime();
   return Math.round((a - b) / 86400000);
 }
-function checkLimitText(){
-  const l = userLimits.check;
-  return (l && typeof l === "string" && /không|unlimited|inf/i.test(l)) ? "∞" : l;
+function toLimitNumber(v){
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return Infinity;                       // de trong = khong gioi han
+  if (/không|unlimited|inf|∞/i.test(s)) return Infinity;
+  const n = parseInt(s, 10);
+  return isNaN(n) ? Infinity : n;
+}
+function limitText(v){
+  const n = (typeof v === "number") ? v : toLimitNumber(v);
+  return n === Infinity ? "∞" : n;
 }
 function phoneKey(s){
   const d = String(s || "").replace(/\D/g, "");
@@ -644,6 +651,7 @@ function renderManage(){
     });
   });
   $("manageCount").textContent = manageRows.length + " số";
+  updateLimitsInfo();
 }
 
 async function loadManage(){
@@ -651,9 +659,14 @@ async function loadManage(){
   renderManage();
   renderManagePoster();
   setStatus("Đã tải " + manageRows.length + " số");
-  // thong tin gioi han (chi hien thi, sua trong Sheet)
+}
+
+function updateLimitsInfo(){
   const info = $("limitsInfo");
-  if (info) info.textContent = "Giới hạn: " + manageRows.length + "/" + userLimits.list + " số" + " | Check hôm nay: " + userChecksToday + "/" + checkLimitText() + (userExpiry ? " | HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : "") : "");
+  if (!info) return;
+  info.textContent = "Giới hạn: " + manageRows.length + "/" + limitText(userLimits.list) + " số"
+    + " | Check hôm nay: " + userChecksToday + "/" + limitText(userLimits.check)
+    + (userExpiry ? " | HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : "") : "");
 }
 
 function isAvailableStatus(v){
@@ -760,10 +773,10 @@ $("manageAdd").addEventListener("click", () => {
   const ckGoc = normCK($("mCkGoc").value.trim());
   const ckMoi = normCK($("mCkMoi").value.trim());
   if (!sdt) return;
-  const limitList = (userLimits && userLimits.list) ? userLimits.list : 3;
+  const limitList = toLimitNumber(userLimits && userLimits.list);
   if (manageRows.length >= limitList){
-    setStatus("Đã đạt giới hạn " + limitList + " số trong danh sách");
-    alert("Đã đạt giới hạn " + limitList + " số. Không thể thêm nữa.");
+    setStatus("Đã đạt giới hạn " + limitText(limitList) + " số trong danh sách");
+    alert("Đã đạt giới hạn " + limitText(limitList) + " số. Không thể thêm nữa.");
     return;
   }
   manageRows.push([sdt, ckGoc, ckMoi, ""]);
@@ -777,11 +790,11 @@ $("manageAdd").addEventListener("click", () => {
 $("manageImport").addEventListener("click", () => {
   const rows = parseList($("mBulk").value);
   if (!rows.length) { setStatus("Không có dữ liệu hợp lệ"); return; }
-  const limitList = (userLimits && userLimits.list) ? userLimits.list : 3;
+  const limitList = toLimitNumber(userLimits && userLimits.list);
   const space = Math.max(0, limitList - manageRows.length);
-  if (space <= 0){ setStatus("Đã đạt giới hạn " + limitList + " số"); alert("Đã đạt giới hạn " + limitList + " số."); return; }
+  if (space <= 0){ setStatus("Đã đạt giới hạn " + limitText(limitList) + " số"); alert("Đã đạt giới hạn " + limitText(limitList) + " số."); return; }
   const toAdd = rows.slice(0, space);
-  if (toAdd.length < rows.length) alert("Chỉ thêm được " + space + " số do giới hạn " + limitList + " số.");
+  if (toAdd.length < rows.length) alert("Chỉ thêm được " + space + " số do giới hạn " + limitText(limitList) + " số.");
   manageRows = manageRows.concat(toAdd);
   $("mBulk").value = "";
   renderManage();
@@ -886,9 +899,78 @@ async function checkAllStatus(){
 // tu dong check khi vao web + dinh ky 15 phut
 let checkTimer = null;
 let syncTimer = null;
+let profileTimer = null;
+let profileBusy = false;
 // nút hiển thị thời gian check cuối, bấm để check lại
 const _lastCheckBtn = $("lastCheckBtn");
 if (_lastCheckBtn) _lastCheckBtn.addEventListener("click", () => checkAllStatus());
+const _limitsInfo = $("limitsInfo");
+if (_limitsInfo) _limitsInfo.addEventListener("click", () => refreshProfile(true));
+
+// cap nhat thong tin tai khoan (gioi han, so da check, han dung) tu Sheet
+function applyProfileData(data){
+  if (!data) return;
+  if (data.ten) currentTen = data.ten;
+  userLimits = { list: toLimitNumber(data.limit_list), check: toLimitNumber(data.limit_check) };
+  userChecksToday = Number(data.checks_today) || 0;
+  const exp = data.expiry || data.expiry_iso || "";
+  userExpiry = parseDateISO(exp) || exp;
+  const un = $("userName");
+  if (un) un.textContent = currentTen || currentUser || "";
+  updateLimitsInfo();
+}
+
+function forceLogout(msg){
+  if (checkTimer) { clearInterval(checkTimer); checkTimer = null; }
+  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
+  if (profileTimer) { clearInterval(profileTimer); profileTimer = null; }
+  currentUser = null; currentTen = null;
+  document.body.classList.remove("open");
+  $("loginUser").value = ""; $("loginPass").value = "";
+  $("loginErr").textContent = msg || "";
+  if (registerMode){
+    registerMode = false;
+    $("authTitle").textContent = "Đăng nhập";
+    $("authSub").textContent = "Nhập tài khoản để truy cập Tool";
+    $("loginBtn").textContent = "Ok let's go";
+    $("regTen").style.display = "none";
+    $("regRefLabel").style.display = "none";
+    $("regRef").style.display = "none";
+    $("regNote").style.display = "none";
+    $("toggleAuth").textContent = "Chưa có tài khoản? Đăng ký";
+  }
+  if (msg) showToast(msg, 8000);
+}
+
+// doc lai thong tin tai khoan ngay lap tuc (khong can reload)
+async function refreshProfile(showMsg){
+  if (!currentUser) return;
+  if (!apiEnabled){
+    updateLimitsInfo();
+    if (showMsg) setStatus("Chế độ demo — giới hạn lưu trên trình duyệt");
+    return;
+  }
+  if (profileBusy) return;
+  profileBusy = true;
+  try {
+    const data = await apiCall({ action: "profile", username: currentUser });
+    if (data && data.ok === false && data.error === "expired"){
+      forceLogout("Tài khoản đã hết hạn (" + fmtDMY(data.expiry || "") + ")");
+      return;
+    }
+    if (data && data.ok){
+      applyProfileData(data);
+      if (showMsg) setStatus("Đã cập nhật thông tin từ Google Sheet");
+    } else if (showMsg){
+      setStatus("Không đọc được thông tin tài khoản từ Sheet (GAS có thể là bản cũ)");
+    }
+  } catch(e){
+    if (showMsg) setStatus("Lỗi đọc thông tin tài khoản: " + e.message);
+  } finally {
+    profileBusy = false;
+  }
+}
+
 async function syncFromSheet(){
   if (!apiEnabled) return;
   try {
@@ -900,13 +982,19 @@ async function syncFromSheet(){
       syncAvailableToCreate();
     }
   } catch(e){}
+  await refreshProfile();
 }
 function startAutoCheck(){
   if (checkTimer) clearInterval(checkTimer);
   if (syncTimer) clearInterval(syncTimer);
-  checkAllStatus();
+  if (profileTimer) clearInterval(profileTimer);
+  refreshProfile().then(checkAllStatus);
   checkTimer = setInterval(async () => { await syncFromSheet(); checkAllStatus(); }, 15 * 60 * 1000);
   syncTimer = setInterval(syncFromSheet, 5 * 60 * 1000);
+  // cap nhat gioi han/han dung gan nhu tuc thi (30 giay/lan, chi khi tab dang mo)
+  profileTimer = setInterval(() => {
+    if (document.visibilityState === "visible") refreshProfile();
+  }, 30 * 1000);
 }
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") syncFromSheet();
@@ -983,7 +1071,7 @@ $("loginForm").addEventListener("submit", async e => {
         const data = await apiCall({ action: "register", username: u, password: p, ten: ten, ref: ref });
         if (data && data.ok){
           ok = true; currentUser = u; currentTen = data.ten || ten;
-          userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 };
+          userLimits = { list: toLimitNumber(data.limit_list), check: toLimitNumber(data.limit_check) };
           userChecksToday = Number(data.checks_today) || 0;
           userExpiry = parseDateISO(data.expiry) || "";
           registerNotice = "Đăng ký thành công! Bạn được " +
@@ -1052,23 +1140,7 @@ $("loginForm").addEventListener("submit", async e => {
 });
 
 $("logout").addEventListener("click", () => {
-  if (checkTimer) { clearInterval(checkTimer); checkTimer = null; }
-  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
-  currentUser = null; currentTen = null;
-  document.body.classList.remove("open");
-  $("loginUser").value = ""; $("loginPass").value = "";
-  $("loginErr").textContent = "";
-  if (registerMode){
-    registerMode = false;
-    $("authTitle").textContent = "Đăng nhập";
-    $("authSub").textContent = "Nhập tài khoản để truy cập Tool";
-    $("loginBtn").textContent = "Ok let's go";
-    $("regTen").style.display = "none";
-    $("regRefLabel").style.display = "none";
-    $("regRef").style.display = "none";
-    $("regNote").style.display = "none";
-    $("toggleAuth").textContent = "Chưa có tài khoản? Đăng ký";
-  }
+  forceLogout("");
 });
 
 $("restore").addEventListener("click", () => {

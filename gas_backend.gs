@@ -32,6 +32,7 @@ function doPost(e) {
   try { data = JSON.parse(e.postData.contents); } catch (err) {}
   const action = data.action;
   if (action === "login") return jsonOut(login(data.username, data.password));
+  if (action === "profile") return jsonOut(profile(data.username));
   if (action === "list") return jsonOut(listNumbers(data.username));
   if (action === "save") return jsonOut(saveNumbers(data.username, data.rows));
   if (action === "check") return jsonOut(checkNumber(data.phone, data.ck));
@@ -45,6 +46,7 @@ function doGet(e) {
   const p = (e && e.parameter) ? e.parameter : {};
   const action = p.action;
   if (action === "login") return jsonOut(login(p.username, p.password));
+  if (action === "profile") return jsonOut(profile(p.username));
   if (action === "list") return jsonOut(listNumbers(p.username));
   if (action === "save") {
     let rows = [];
@@ -122,8 +124,6 @@ function toDMY(iso) {
 function padUser(row) {
   const r = row.slice();
   while (r.length < 9) r.push("");
-  if (r[3] === "" || r[3] == null) r[3] = 3;
-  if (r[4] === "" || r[4] == null) r[4] = 10;
   if (r[5] === "" || r[5] == null) r[5] = 0;
   if (r[6] == null) r[6] = "";
   if (r[7] == null) r[7] = "";
@@ -151,6 +151,43 @@ function login(username, password) {
     }
   }
   return { ok: false };
+}
+
+// Doc lai thong tin tai khoan (gioi han, so da check, han dung) truc tiep tu Sheet
+function profile(username) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sh = ss.getSheetByName(USERS_SHEET);
+  const rows = sh.getDataRange().getValues();
+  const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+  for (let i = 1; i < rows.length; i++) {
+    const r = padUser(rows[i]);
+    if (String(r[0]).trim() !== String(username).trim()) continue;
+
+    const exp = normDate(r[7]);
+    if (exp && today > exp) {
+      return { ok: false, error: "expired", expiry: toDMY(exp), expiry_iso: exp };
+    }
+
+    // so da check hom nay: doc tu cot F, nhung neu danh sach cot I la ngay cu thi coi nhu 0
+    let checks = Number(r[5]) || 0;
+    const stored = String(r[8] == null ? "" : r[8]);
+    const bar = stored.indexOf("|");
+    if (bar >= 0) {
+      if (stored.slice(0, bar) !== today) checks = 0;
+    }
+
+    return {
+      ok: true,
+      ten: r[2] || username,
+      limit_list: r[3],
+      limit_check: r[4],
+      checks_today: checks,
+      last_check_date: r[6],
+      expiry: toDMY(exp),
+      expiry_iso: exp
+    };
+  }
+  return { ok: false, error: "user not found" };
 }
 
 function listNumbers(username) {
