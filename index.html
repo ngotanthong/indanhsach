@@ -131,6 +131,7 @@
       <div class="ic">🔒</div>
       <h2>Đăng nhập</h2>
       <p class="sub">Nhập tài khoản để truy cập Tool</p>
+      <p style="font-size:11px;color:#6b7a8d;margin-top:-10px;margin-bottom:10px">Demo: ngotanthong / ngotanthong</p>
       <input type="text" id="loginUser" placeholder="Tên đăng nhập" autofocus>
       <input type="password" id="loginPass" placeholder="Mật khẩu">
       <button type="submit" id="loginBtn">Ok let's go</button>
@@ -285,8 +286,11 @@ async function apiCall(payload){
     if (k === "rows") params.set("data", JSON.stringify(payload.rows));
     else params.set(k, payload[k] == null ? "" : payload[k]);
   }
-  const res = await fetch(API_URL + "?" + params.toString(), { method: "GET" });
-  return res.json();
+  const res = await fetch(API_URL + "?" + params.toString(), { method: "GET", credentials: "omit" });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const text = await res.text();
+  try { return JSON.parse(text); }
+  catch(e){ throw new Error("Phản hồi không phải JSON (có thể GAS chưa public 'Anyone')"); }
 }
 
 async function doLogin(username, password){
@@ -295,7 +299,7 @@ async function doLogin(username, password){
       const data = await apiCall({ action: "login", username, password });
       if (data && data.ok){ currentUser = username; currentTen = data.ten || username; return true; }
       return false;
-    } catch(e){ return false; }
+    } catch(e){ doLogin._err = e.message; return false; }
   } else {
     const u = getUsersLocal();
     if (u[username] && u[username].password === password){
@@ -623,7 +627,8 @@ async function checkAllStatus(){
         manageRows[i][3] = manageRows[i][3] || "Lỗi";
       }
     } catch(e){
-      manageRows[i][3] = manageRows[i][3] || "Lỗi";
+      manageRows[i][3] = "Lỗi";
+      setStatus("Lỗi: " + e.message);
     }
     done++;
     renderManage();
@@ -664,7 +669,7 @@ $("loginForm").addEventListener("submit", async e => {
     if (r && !$("inp").value) { $("restore").classList.add("show"); }
     setTimeout(() => $("inp").focus(), 50);
   } else {
-    $("loginErr").textContent = "Sai tên đăng nhập hoặc mật khẩu";
+    $("loginErr").textContent = doLogin._err ? ("Lỗi kết nối GAS: " + doLogin._err) : "Sai tên đăng nhập hoặc mật khẩu";
     $("loginPass").value = "";
     const b = document.querySelector("#lock .box");
     b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
