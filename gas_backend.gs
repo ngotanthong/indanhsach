@@ -287,22 +287,51 @@ function checkNumber(phone, ck) {
 
   const target = digits.startsWith("0") ? ("84" + digits.substring(1)) : digits;
 
-  for (let b = 0; b < bucketsToTry.length; b++) {
-    const commit = bucketsToTry[b];
-    const url = "https://digishop.vnpt.vn/apiprod/v2/simso/num_search?search=" +
-      encodeURIComponent(search) + "&prefix=" + encodeURIComponent(prefix) + "&commit=" + commit;
-    try {
-      const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
-      const json = JSON.parse(resp.getContentText());
-      const data = (json && json.data) ? json.data : [];
-      const found = data.some(function (d) {
-        return String(d.so_tb) === target;
-      });
-      if (found) return { ok: true, available: true, bucket: commit };
-    } catch (e) {}
+  // Thu lai nhieu lan de tranh ket qua sai do mang/API chay khong on dinh
+  const MAX_ATTEMPTS = 3;
+  let lastError = false;
+  let sawAvailable = false;
+  let sawUnavailable = false;
+
+  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
+    let attemptFound = false;
+    let attemptNotFound = false;
+    let attemptError = false;
+
+    for (let b = 0; b < bucketsToTry.length; b++) {
+      const commit = bucketsToTry[b];
+      const url = "https://digishop.vnpt.vn/apiprod/v2/simso/num_search?search=" +
+        encodeURIComponent(search) + "&prefix=" + encodeURIComponent(prefix) +
+        "&commit=" + commit + "&_t=" + Date.now();
+      try {
+        const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
+        const code = resp.getResponseCode();
+        if (code < 200 || code >= 300) { attemptError = true; continue; }
+        const json = JSON.parse(resp.getContentText());
+        const data = (json && json.data) ? json.data : [];
+        const found = Array.isArray(data) && data.some(function (d) {
+          return String(d.so_tb || "").replace(/\s/g, "") === target;
+        });
+        if (found) { attemptFound = true; break; }
+        else { attemptNotFound = true; }
+      } catch (e) {
+        attemptError = true;
+      }
+    }
+
+    if (attemptFound) { sawAvailable = true; break; }
+    if (attemptError && !attemptNotFound) { lastError = true; }
+    if (attemptNotFound && !attemptFound) { sawUnavailable = true; }
+
+    if (attempt < MAX_ATTEMPTS - 1) Utilities.sleep(400);
   }
+
+  // Chi ket luan "Het" khi tat ca cac lan thu deu khong tim thay va khong co loi mang
+  if (sawAvailable) return { ok: true, available: true, bucket: bucket };
+  if (lastError && !sawUnavailable) return { ok: false, error: "network" };
   return { ok: true, available: false, bucket: bucket };
 }
+
 
 function pad2(n) { return ("0" + n).slice(-2); }
 

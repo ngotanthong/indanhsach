@@ -376,8 +376,9 @@ async function apiCall(payload){
     else if (Array.isArray(payload[k])) params.set(k, JSON.stringify(payload[k]));
     else params.set(k, payload[k] == null ? "" : payload[k]);
   }
+  params.set("_", String(Date.now()));
   try {
-    const res = await fetch(API_URL + "?" + params.toString(), { method: "GET", credentials: "omit" });
+    const res = await fetch(API_URL + "?" + params.toString(), { method: "GET", credentials: "omit", cache: "no-store" });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const text = await res.text();
     let data;
@@ -955,6 +956,8 @@ async function checkAllStatus(){
     done++;
     if (barFill) barFill.style.width = Math.round((done / rowsToCheck.length) * 100) + "%";
     renderManage();
+    // nho de tranh bi VNPT gioi han tan so
+    if (i < rowsToCheck.length - 1) await new Promise(r => setTimeout(r, 250));
   }
   await saveNumbers(manageRows);
   renderManage();
