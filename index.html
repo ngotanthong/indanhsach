@@ -326,10 +326,15 @@ async function doLogin(username, password){
       // fallback demo neu GAS chua public
       const u = getUsersLocal();
       if (u[username] && u[username].password === password){
+        const exp = u[username].expiry || "";
+        if (exp){
+          const today = new Date().toISOString().slice(0,10);
+          if (today > exp){ doLogin._err = "Tài khoản đã hết hạn (" + exp + ")"; return false; }
+        }
         apiEnabled = false;
         currentUser = username; currentTen = u[username].ten || username;
         userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
-        userExpiry = u[username].expiry || "";
+        userExpiry = exp;
         return true;
       }
       return false;
@@ -337,9 +342,14 @@ async function doLogin(username, password){
   } else {
     const u = getUsersLocal();
     if (u[username] && u[username].password === password){
+      const exp = u[username].expiry || "";
+      if (exp){
+        const today = new Date().toISOString().slice(0,10);
+        if (today > exp){ doLogin._err = "Tài khoản đã hết hạn (" + exp + ")"; return false; }
+      }
       currentUser = username; currentTen = u[username].ten || username;
       userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
-      userExpiry = u[username].expiry || "";
+      userExpiry = exp;
       return true;
     }
     return false;
