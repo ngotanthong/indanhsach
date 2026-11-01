@@ -2,71 +2,45 @@
 
 Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp VinaPhone** (30 dòng, chia 3 khối × 10 dòng), xuất ra ảnh/PDF để in.
 
+## Tính năng mới
+- Đăng nhập bằng **tên đăng nhập + mật khẩu** (lưu trong Google Sheet).
+- Mỗi user có **danh sách số riêng**, lưu/tải từ Google Sheet.
+- Hiển thị tên user ở góc trên bên phải sau khi đăng nhập.
+- Hai tab: **Quản lý số** (thêm/sửa/xóa list số) và **Nhập số để tạo bảng** (tạo poster).
+- User demo: `ngotanthong` / `ngotanthong`.
+- Bỏ quản lý user theo ngày hết hạn.
+
 ## Cách dùng nhanh nhất — `index.html`
+1. Mở `index.html` bằng Chrome.
+2. Đăng nhập: `ngotanthong` / `ngotanthong`.
+3. Tab **Quản lý số**: thêm số, lưu tự động.
+4. Tab **Nhập số để tạo bảng**: dán list hoặc bấm "Lấy từ danh sách đã quản lý" → poster tự điền.
+5. Bấm **🖨 In / Lưu PDF** hoặc **⬇ Tải PNG**.
 
-> ⚠️ `index.html` cần file **`bckground.jpg`** ở **cùng thư mục** (ảnh nền được tải riêng, không nhúng trong HTML — để tải nhanh trên điện thoại). File `bckground.png` là bản gốc độ phân giải cao, giữ lại để in ấn (dùng với `fill_poster.py`).
+### Chế độ demo (offline)
+Mặc định `API_URL = ""` trong `index.html`: dữ liệu lưu trong trình duyệt (localStorage), không cần mạng/Sheet. Phù hợp để thử.
 
-1. **Nhấp đôi** vào `index.html` → mở bằng Chrome (chạy offline, không cần mạng).
-2. Nhập **mật khẩu** `ngotanthong` → vào công cụ.
-3. **Dán danh sách** vào ô bên trái → poster tự điền ngay.
-4. Bấm **🖨 In / Lưu PDF** → chọn *Đích: Lưu dưới dạng PDF* → Lưu.
+### Kết nối Google Sheet (lưu thật)
+1. Mở Google Sheet: https://docs.google.com/spreadsheets/d/16X92ss43OtOJTK9IqhjnzEnesgvWuawdha63_ogNzvw
+2. Extensions → Apps Script, dán nội dung file `gas_backend.gs`, lưu.
+3. Chạy hàm `setup()` một lần (tạo sheet "Users", "Numbers" + user demo).
+4. Deploy → New deployment → Web app → Execute as: Me, Who has access: **Anyone** (không phải "Anyone with Google account") → Deploy.
+5. Nếu đã deploy trước đó, vào Deploy → Manage deployments → ✏️ → Version: New version → Deploy để cập nhật code mới.
+6. Copy URL (dạng `https://script.google.com/macros/s/.../exec`).
+6. Mở `index.html`, sửa `const API_URL = "";` thành `const API_URL = "URL_VUA_COPY";`, lưu.
+7. Tải lại trang và đăng nhập.
 
-### Định dạng dữ liệu (giữ nguyên chữ gõ)
-
-Dán trực tiếp từ Excel / Google Sheets, mỗi dòng 1 số, 2 cột cách nhau bằng **Tab**:
-
-```
-0846 74 7979	800k
-0853 82 8889	400k
-```
-
-Nội dung được **giữ y nguyên** (dấu cách trong số, chữ `k`, `0`, `1500k`...). Có thể thêm cột STT ở đầu cũng được:
-
-```
-1	0846 74 7979	800k
-2	0853 82 8889	400k
-```
-
-Chỉ dán 1 cột số thuê bao cũng OK — cột CK sẽ để trống.
-
-### Tiện ích trong `index.html`
-
-- Nhớ danh sách vừa nhập (link "↩ Khôi phục danh sách vừa nhập" khi tải lại trang).
-- Chỉnh màu số thuê bao / màu CK / cỡ chữ trực tiếp.
-- Tải file `.csv`/`.txt`/`.tsv` để điền.
-- **⬇ Tải PNG** xuất ảnh 2× (2896×2172) để gửi Zalo/Facebook.
-- Khi in, phần bảng điều khiển tự ẩn — chỉ in tấm poster.
-
-## Đổi ảnh nền
-
-Thay file `bckground.png` bằng ảnh mới **cùng tên**, rồi chạy:
-
-```bash
-python3 build_tool.py
-```
-
-→ `index.html` tự nhúng ảnh mới (một file duy nhất, mang đi đâu cũng được).
-
-## Đổi mật khẩu
-
-Mở `build_tool.py`, sửa dòng:
-
-```python
-PASSWORD = "ngotanthong"      # <-- doi mat khau o day
-```
-
-rồi chạy lại `python3 build_tool.py`.
+### Cấu trúc Google Sheet
+- Sheet `Users`: cột A = username, B = password, C = tên hiển thị.
+- Sheet `Numbers`: cột A = username, B = số thuê bao, C = cam kết gốc, D = cam kết mới, E = trạng thái.
 
 ## Các file trong repo
-
 | File | Công dụng |
 |---|---|
-| `index.html` | ⭐ Công cụ chính — mở là chạy (đã chứa sẵn ảnh nền) |
-| `build_tool.py` | Tạo lại `index.html` (đổi ảnh nền / mật khẩu) |
-| `fill_poster.py` | Bản Python dự phòng, chạy hàng loạt |
-| `poster_filled.png` / `@2x` / `.pdf` | Poster mẫu theo định dạng mới |
-| `bckground.png` | Ảnh nền poster gốc |
+| `index.html` | ⭐ Công cụ chính |
+| `gas_backend.gs` | Backend Google Apps Script (tùy chọn, để lưu vào Sheet) |
+| `build_tool.py` | Tạo lại `bckground.jpg` từ `bckground.png` |
+| `bckground.png` / `bckground.jpg` | Ảnh nền poster |
 
-## Lưu ý
-
-Mật khẩu chỉ là **cổng chặn nhẹ** (file HTML chạy offline một mình) — đủ để người khác mở file không vào được ngay, nhưng không phải bảo mật thật. Nếu cần chặn thật (đặt lên mạng, nhiều người dùng) thì phải có server xác thực.
+## Đổi ảnh nền
+Thay file `bckground.png` rồi chạy `python3 build_tool.py`.

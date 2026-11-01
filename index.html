@@ -8,28 +8,48 @@
   :root{ --sdt:#122342; --ck:#c0201a; }
   *{box-sizing:border-box;margin:0;padding:0}
   body{font-family:Arial,Helvetica,sans-serif;background:#eef2f7;color:#1b2735}
-  #app{display:none;gap:20px;padding:20px;align-items:flex-start}
+  #app{display:none;flex-direction:column;gap:14px;padding:20px}
   body.open #app{display:flex}
 
-  /* ---- man hinh mat khau ---- */
+  /* ---- man hinh dang nhap ---- */
   #lock{position:fixed;inset:0;z-index:99;display:flex;align-items:center;justify-content:center;
         background:linear-gradient(160deg,#0a3c78,#1a6fd4 55%,#2ea3f2)}
   body.open #lock{display:none}
-  #lock .box{background:#fff;border-radius:18px;padding:34px 32px;width:340px;text-align:center;
+  #lock .box{background:#fff;border-radius:18px;padding:34px 32px;width:360px;text-align:center;
         box-shadow:0 20px 50px rgba(0,20,50,.4)}
   #lock .box .ic{font-size:40px;line-height:1}
   #lock .box h2{font-size:19px;margin:12px 0 4px;color:#0a3c78}
   #lock .box p.sub{font-size:12.5px;color:#6b7a8d;margin-bottom:18px}
   #lock .box input{width:100%;padding:12px 14px;border:1.5px solid #c7d4e4;border-radius:10px;
-        font-size:16px;outline:none;text-align:center}
+        font-size:16px;outline:none;margin-top:8px}
   #lock .box input:focus{border-color:#1a6fd4;box-shadow:0 0 0 3px #1a6fd422}
   #lock .box button{width:100%;margin-top:12px;padding:12px;border:0;border-radius:10px;
         background:#1a6fd4;color:#fff;font-size:15px;font-weight:700;cursor:pointer}
   #lock .box button:hover{filter:brightness(1.07)}
+  #lock .box button:disabled{opacity:.6;cursor:wait}
   #lock .err{color:#c0201a;font-size:12.5px;font-weight:700;margin-top:10px;min-height:16px}
   @keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-7px)}75%{transform:translateX(7px)}}
   .shake{animation:shake .28s}
 
+  /* ---- top bar ---- */
+  #topbar{display:flex;align-items:center;justify-content:space-between;background:#fff;
+          border-radius:14px;padding:12px 18px;box-shadow:0 6px 20px rgba(20,50,90,.12)}
+  #topbar .title{font-size:16px;font-weight:700;color:#0a3c78}
+  #topbar .userbox{display:flex;align-items:center;gap:10px;font-size:13px;color:#1b2735}
+  #topbar .userbox .name{font-weight:700;color:#1a6fd4}
+  #topbar .userbox button{flex:0 0 auto;min-width:0;padding:6px 12px;font-size:12px}
+
+  /* ---- tabs ---- */
+  .tabs{display:flex;gap:8px}
+  .tab{flex:0 0 auto;min-width:120px;padding:10px 16px;border:0;border-radius:9px;
+       font-size:14px;font-weight:700;cursor:pointer;background:#e8effa;color:#1a4f9c}
+  .tab.active{background:#1a6fd4;color:#fff}
+  .tab:hover{filter:brightness(1.06)}
+  .tabpane{display:none}
+  .tabpane.active{display:block}
+
+  /* ---- panel tao bang ---- */
+  .create-wrap{display:flex;gap:20px;align-items:flex-start}
   .panel{width:370px;flex:0 0 370px;background:#fff;border-radius:14px;padding:18px;
          box-shadow:0 6px 20px rgba(20,50,90,.12);position:sticky;top:20px}
   .panel h1{font-size:18px;margin-bottom:6px}
@@ -43,12 +63,14 @@
   button{flex:1;min-width:110px;padding:11px 12px;border:0;border-radius:9px;
          font-size:14px;font-weight:700;cursor:pointer;background:#1a6fd4;color:#fff}
   button.ghost{background:#e8effa;color:#1a4f9c}
+  button.danger{background:#fdecea;color:#c0201a}
   button:hover{filter:brightness(1.06)}
   .opts{display:flex;gap:14px;margin-top:14px;flex-wrap:wrap;align-items:center;font-size:12.5px}
   .opts label{display:flex;align-items:center;gap:6px;color:#5b6b7f;font-weight:700}
   input[type=color]{width:36px;height:28px;border:1px solid #c7d4e4;border-radius:6px;background:#fff;padding:2px}
   input[type=number]{width:62px;border:1.5px solid #c7d4e4;border-radius:8px;padding:6px;font-size:13px}
   input[type=file]{margin-top:10px;font-size:12px;width:100%}
+  input[type=text], input[type=password]{border:1.5px solid #c7d4e4;border-radius:8px;padding:6px 8px;font-size:13px}
   #restore{display:none;margin-top:9px;font-size:12px;color:#1a6fd4;cursor:pointer;
            text-decoration:underline;font-weight:700}
   #restore.show{display:inline-block}
@@ -63,21 +85,41 @@
         font-size:calc(var(--fs) * 0.06906cqw)}
   .cell.sdt{color:var(--sdt)}
   .cell.ck{color:var(--ck)}
+
+  /* ---- quan ly so ---- */
+  .manage-box{background:#fff;border-radius:14px;padding:18px;box-shadow:0 6px 20px rgba(20,50,90,.12)}
+  .manage-box h2{font-size:18px;margin-bottom:10px;color:#0a3c78}
+  .manage-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .manage-grid input{width:100%}
+  .manage-grid label{font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px}
+  .manage-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .manage-actions button{flex:0 0 auto;min-width:120px}
+  table.mtable{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px}
+  table.mtable th, table.mtable td{border:1px solid #d5e2f7;padding:6px 8px}
+  table.mtable th{background:#eef4ff;color:#12437f}
+  table.mtable input{width:100%;border:1px solid #c7d4e4;border-radius:6px;padding:4px 6px;font-size:13px}
+  .bulk{margin-top:14px}
+  .bulk textarea{height:120px}
+  .status{font-size:12.5px;color:#1a4f9c;font-weight:700;margin-top:6px;min-height:16px}
+
   @media (max-width: 760px){
-    #app{flex-direction:column;padding:12px;gap:14px}
+    #app{padding:12px;gap:10px}
+    .create-wrap{flex-direction:column}
     .panel{width:100%;flex:0 0 auto;position:static}
     .stage{width:100%}
     textarea{height:180px;font-size:16px}
     .opts{gap:10px}
     input[type=number]{width:56px;font-size:16px}
-    #lock .box{width:90%;max-width:340px;padding:28px 22px}
+    #lock .box{width:90%;max-width:360px;padding:28px 22px}
+    .manage-grid{grid-template-columns:1fr}
   }
   @media print{
     @page{size:1448px 1086px;margin:0}
     body{background:#fff}
     #lock{display:none}
     body.open #app{display:block;padding:0}
-    .panel{display:none}
+    #topbar,.tabs,#tab-manage,.panel{display:none}
+    .create-wrap{display:block}
     .stage{width:1448px}
     .poster{box-shadow:none;border-radius:0}
   }
@@ -85,49 +127,118 @@
 </head>
 <body>
   <div id="lock">
-    <form class="box" id="lockForm" autocomplete="off">
+    <form class="box" id="loginForm" autocomplete="off">
       <div class="ic">🔒</div>
-      <h2>Thông xin chào</h2>
-      <p class="sub">Mời anh chị nhập code để truy cập Tool nhé</p>
-      <input type="password" id="pw" placeholder="Mật khẩu" autofocus>
-      <button type="submit">Ok let's go</button>
-      <div class="err" id="err"></div>
+      <h2>Đăng nhập</h2>
+      <p class="sub">Nhập tài khoản để truy cập Tool</p>
+      <input type="text" id="loginUser" placeholder="Tên đăng nhập" autofocus>
+      <input type="password" id="loginPass" placeholder="Mật khẩu">
+      <button type="submit" id="loginBtn">Ok let's go</button>
+      <div class="err" id="loginErr"></div>
     </form>
   </div>
 
   <div id="app">
-  <div class="panel">
-    <h1>Tools tạo danh sách số</h1>
-    <p class="hint">Dán danh sách từ Excel / Google Sheets hoặc gõ tay.
-      Mỗi dòng 1 số, 2 cột cách nhau bằng Tab, ví dụ:
-      <br><code>0846 74 7979	800k</code>
-      <br>
-      <br>
-    </p>
-    <textarea id="inp" spellcheck="false" placeholder=""></textarea>
-    <input type="file" id="file" accept=".csv,.txt,.tsv">
-    <div id="restore">↩ Khôi phục danh sách vừa nhập</div>
-    <div class="row">
-      <button id="print">🖨 In / Lưu PDF</button>
-      <button id="png" class="ghost">⬇ Tải PNG</button>
-      <button id="clear" class="ghost">Xóa</button>
+    <div id="topbar">
+      <span class="title">Tools tạo danh sách số</span>
+      <div class="userbox">
+        <span>Xin chào,</span>
+        <span class="name" id="userName">-</span>
+        <button id="logout" class="ghost">Đăng xuất</button>
+      </div>
     </div>
-    <div class="opts">
-      <label>Màu số<input type="color" id="cSdt" value="#122342"></label>
-      <label>Màu CK<input type="color" id="cCk" value="#c0201a"></label>
-      <label>Cỡ chữ<input type="number" id="fs" value="31" min="18" max="46"></label>
-    </div>
-    <div class="count" id="count">0 số</div>
-  </div>
 
-  <div class="stage">
-    <div class="poster" id="poster">
-      <img id="bg" src="bckground.jpg" alt="poster">
+    <div class="tabs">
+      <button class="tab active" data-tab="manage">Quản lý số</button>
+      <button class="tab" data-tab="create">Nhập số để tạo bảng</button>
     </div>
-  </div>
+
+    <div id="tab-manage" class="tabpane active">
+      <div class="manage-box">
+        <h2>Quản lý số của bạn</h2>
+        <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">
+          <div>
+            <label>Số thuê bao</label>
+            <input type="text" id="mSdt" placeholder="0846 74 7979">
+          </div>
+          <div>
+            <label>Cam kết gốc</label>
+            <input type="text" id="mCkGoc" placeholder="800k">
+          </div>
+          <div>
+            <label>Cam kết mới</label>
+            <input type="text" id="mCkMoi" placeholder="600k">
+          </div>
+          <div>
+            <label>Trạng thái</label>
+            <input type="text" id="mStatus" placeholder="Còn / Đã bán">
+          </div>
+        </div>
+        <div class="manage-actions">
+          <button id="manageAdd">+ Thêm số</button>
+          <button id="manageToCreate" class="ghost">Dùng cho tạo bảng</button>
+          <span class="count" id="manageCount">0 số</span>
+        </div>
+        <div class="status" id="manageStatus"></div>
+        <table class="mtable">
+          <thead><tr><th style="width:40px">STT</th><th>Số thuê bao</th><th>CK gốc</th><th>CK mới</th><th>Trạng thái</th><th style="width:70px">Xóa</th></tr></thead>
+          <tbody id="manageTbody"></tbody>
+        </table>
+
+        <div class="bulk">
+          <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
+          <textarea id="mBulk" spellcheck="false" placeholder="0846 74 7979	800k"></textarea>
+          <div class="manage-actions">
+            <button id="manageImport" class="ghost">Nhập từ text</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="tab-create" class="tabpane">
+      <div class="create-wrap">
+        <div class="panel">
+          <h1>Nhập số để tạo bảng</h1>
+          <p class="hint">Dán danh sách từ Excel / Google Sheets hoặc gõ tay.
+            Mỗi dòng 1 số, 2 cột cách nhau bằng Tab, ví dụ:
+            <br><code>0846 74 7979	800k</code>
+            <br>
+            <br>
+          </p>
+          <textarea id="inp" spellcheck="false" placeholder=""></textarea>
+          <input type="file" id="file" accept=".csv,.txt,.tsv">
+          <div id="restore">↩ Khôi phục danh sách vừa nhập</div>
+          <div class="row">
+            <button id="print">🖨 In / Lưu PDF</button>
+            <button id="png" class="ghost">⬇ Tải PNG</button>
+            <button id="clear" class="ghost">Xóa</button>
+          </div>
+          <div class="row">
+            <button id="createFromManaged" class="ghost">Lấy từ danh sách đã quản lý</button>
+          </div>
+          <div class="opts">
+            <label>Màu số<input type="color" id="cSdt" value="#122342"></label>
+            <label>Màu CK<input type="color" id="cCk" value="#c0201a"></label>
+            <label>Cỡ chữ<input type="number" id="fs" value="31" min="18" max="46"></label>
+          </div>
+          <div class="count" id="count">0 số</div>
+        </div>
+
+        <div class="stage">
+          <div class="poster" id="poster">
+            <img id="bg" src="bckground.jpg" alt="poster">
+          </div>
+        </div>
+      </div>
+    </div>
   </div><!-- /#app -->
 
 <script>
+/* ================= CONFIG ================= */
+// Dán URL Web App của Google Apps Script (deploy) vào đây. Để trống = chế độ demo (lưu trong trình duyệt).
+const API_URL = "https://script.google.com/macros/s/AKfycbwY1hZr42h-0rDr8NNsDPp0MuwnEEYNtfPtHDF5iwReA-pJ3i-kspNfbVVI5AInXZ3r7w/exec";
+const DEMO_USERS = { "ngotanthong": { password: "ngotanthong", ten: "ngotanthong" } };
+
 const W = 1448, H = 1086;
 const ROW_Y = [489.5,533.5,579,624,669,714,760,806,851.5,898.5];
 const BLOCKS = [
@@ -136,13 +247,82 @@ const BLOCKS = [
   { xSdt:1178,   xCk:1351.5, start:21 }
 ];
 let DATA = [];
-const $ = id => document.getElementById(id);
-const store = {
-  get(){ try { return localStorage.getItem("sodep_list"); } catch(e){ return null; } },
-  set(v){ try { localStorage.setItem("sodep_list", v); } catch(e){} }
-};
+let currentUser = null;
+let currentTen = null;
+let manageRows = [];
 
-/* Giu Y NGUYEN chu da go: khoang cach trong so, chu "k", dau cham... */
+const $ = id => document.getElementById(id);
+
+/* ================= storage helpers ================= */
+function getUsersLocal(){
+  try { return JSON.parse(localStorage.getItem("sodep_users") || "{}"); } catch(e){ return {}; }
+}
+function saveUsersLocal(o){ try { localStorage.setItem("sodep_users", JSON.stringify(o)); } catch(e){} }
+function seedDemoUsers(){
+  const u = getUsersLocal();
+  let changed = false;
+  for (const k in DEMO_USERS){
+    if (!u[k]){ u[k] = DEMO_USERS[k]; changed = true; }
+  }
+  if (changed) saveUsersLocal(u);
+}
+seedDemoUsers();
+
+function manageKey(u){ return "sodep_manage_" + u; }
+
+/* ================= API helpers ================= */
+async function apiCall(payload){
+  const params = new URLSearchParams();
+  for (const k in payload){
+    if (k === "rows") params.set("data", JSON.stringify(payload.rows));
+    else params.set(k, payload[k] == null ? "" : payload[k]);
+  }
+  const res = await fetch(API_URL + "?" + params.toString(), { method: "GET" });
+  return res.json();
+}
+
+async function doLogin(username, password){
+  if (API_URL){
+    try {
+      const data = await apiCall({ action: "login", username, password });
+      if (data && data.ok){ currentUser = username; currentTen = data.ten || username; return true; }
+      return false;
+    } catch(e){ return false; }
+  } else {
+    const u = getUsersLocal();
+    if (u[username] && u[username].password === password){
+      currentUser = username; currentTen = u[username].ten || username; return true;
+    }
+    return false;
+  }
+}
+
+async function loadNumbers(){
+  if (API_URL){
+    try {
+      const data = await apiCall({ action: "list", username: currentUser });
+      return (data && data.rows) ? data.rows : [];
+    } catch(e){ return []; }
+  } else {
+    try { return JSON.parse(localStorage.getItem(manageKey(currentUser)) || "[]"); } catch(e){ return []; }
+  }
+}
+
+async function saveNumbers(rows){
+  if (API_URL){
+    try { await apiCall({ action: "save", username: currentUser, rows: rows }); } catch(e){}
+  } else {
+    try { localStorage.setItem(manageKey(currentUser), JSON.stringify(rows)); } catch(e){}
+  }
+  setStatus("Đã lưu");
+}
+
+function setStatus(msg){
+  const el = $("manageStatus");
+  if (el){ el.textContent = msg; }
+}
+
+/* ================= parse list ================= */
 function parseList(text){
   const out = [];
   for (const raw of text.split(/\r?\n/)){
@@ -156,18 +336,18 @@ function parseList(text){
     parts = parts.map(s => s.trim()).filter(s => s !== "");
     if (!parts.length) continue;
 
-    // bo cot STT o dau neu do la so nho (1..3 chu so)
     if (parts.length >= 3 && /^\d{1,3}$/.test(parts[0])) parts = parts.slice(1);
 
     const sdt = parts[0];
-    const ck  = parts.length > 1 ? parts[parts.length - 1] : "";
-    if (sdt.replace(/\D/g, "").length < 9) continue;   // khong phai so thue bao
-    out.push([sdt, ck]);                                // luu nguyen van
+    const ckGoc = parts.length > 1 ? parts[1] : "";
+    const ckMoi = parts.length > 2 ? parts[2] : "";
+    const trangThai = parts.length > 3 ? parts[3] : "";
+    if (sdt.replace(/\D/g, "").length < 9) continue;
+    out.push([sdt, ckGoc, ckMoi, trangThai]);
   }
   return out;
 }
 
-/* Tach CK ra khoi chuoi chi co khoang trang: "0846 74 7979 800k" */
 function splitSmart(line){
   const toks = line.split(/\s+/);
   if (toks.length < 2) return [line];
@@ -182,6 +362,9 @@ function looksMoney(t){
   return /[\d.,]+\s*(k|đ|tr)$/i.test(t) || /^(k|K|đ|₫|tr)$/i.test(t);
 }
 
+function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+/* ================= render poster ================= */
 function render(){
   const poster = $("poster");
   poster.querySelectorAll(".cell").forEach(e => e.remove());
@@ -192,7 +375,7 @@ function render(){
     const b = BLOCKS[bi];
     const y = ROW_Y[stt - b.start];
     addCell(b.xSdt, y, row[0], "sdt");
-    addCell(b.xCk,  y, row[1], "ck");
+    addCell(b.xCk,  y, (row[2] && row[2].trim()) ? row[2] : (row[1] || ""), "ck");
   });
   $("count").textContent = DATA.length + " số";
 }
@@ -210,10 +393,51 @@ function update(){
   const v = $("inp").value;
   DATA = parseList(v);
   render();
-  if (v.trim() !== "") store.set(v);       // chi luu khi co du lieu
+  if (v.trim() !== "") {
+    try { localStorage.setItem("sodep_list_" + (currentUser||"guest"), v); } catch(e){}
+  }
 }
 
-/* ---- options ---- */
+/* ================= manage tab ================= */
+function renderManage(){
+  const tb = $("manageTbody");
+  tb.innerHTML = "";
+  manageRows.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${i+1}</td>
+      <td><input type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0"></td>
+      <td><input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1"></td>
+      <td><input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2"></td>
+      <td><input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3"></td>
+      <td><button class="danger" data-del="${i}" style="padding:4px 6px;font-size:12px;min-width:0;flex:0 0 auto">Xóa</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("input").forEach(inp => {
+    inp.addEventListener("change", e => {
+      const i = +e.target.dataset.i, f = +e.target.dataset.f;
+      if (!manageRows[i]) return;
+      manageRows[i][f] = e.target.value;
+      saveNumbers(manageRows);
+    });
+  });
+  tb.querySelectorAll("button[data-del]").forEach(b => {
+    b.addEventListener("click", e => {
+      const i = +e.target.dataset.del;
+      manageRows.splice(i, 1);
+      renderManage();
+      saveNumbers(manageRows);
+    });
+  });
+  $("manageCount").textContent = manageRows.length + " số";
+}
+
+async function loadManage(){
+  manageRows = await loadNumbers();
+  renderManage();
+  setStatus("Đã tải " + manageRows.length + " số");
+}
+
+/* ================= events: options ================= */
 $("cSdt").addEventListener("input", e => document.documentElement.style.setProperty("--sdt", e.target.value));
 $("cCk").addEventListener("input",  e => document.documentElement.style.setProperty("--ck",  e.target.value));
 $("fs").addEventListener("input",   e => $("poster").style.setProperty("--fs", e.target.value || 31));
@@ -246,8 +470,9 @@ $("png").addEventListener("click", async () => {
       const bi = stt <= 10 ? 0 : stt <= 20 ? 1 : 2;
       const b = BLOCKS[bi];
       const y = ROW_Y[stt - b.start] * s;
+      const ckTxt = (row[2] && row[2].trim()) ? row[2] : (row[1] || "");
       ctx.fillStyle = cSdt; ctx.fillText(row[0], b.xSdt * s, y);
-      ctx.fillStyle = cCk;  ctx.fillText(row[1], b.xCk  * s, y);
+      ctx.fillStyle = cCk;  ctx.fillText(ckTxt, b.xCk  * s, y);
     });
     const a = document.createElement("a");
     a.href = c.toDataURL("image/png");
@@ -258,32 +483,97 @@ $("png").addEventListener("click", async () => {
   }
 });
 
-/* ---- man hinh mat khau ---- */
-$("lockForm").addEventListener("submit", e => {
+/* ---- tabs ---- */
+document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  document.querySelectorAll(".tabpane").forEach(p=>p.classList.remove("active"));
+  document.getElementById("tab-" + b.dataset.tab).classList.add("active");
+}));
+
+/* ---- manage events ---- */
+$("manageAdd").addEventListener("click", () => {
+  const sdt = $("mSdt").value.trim();
+  const ckGoc = $("mCkGoc").value.trim();
+  const ckMoi = $("mCkMoi").value.trim();
+  const st = $("mStatus").value.trim();
+  if (!sdt) return;
+  manageRows.push([sdt, ckGoc, ckMoi, st]);
+  $("mSdt").value = ""; $("mCkGoc").value = ""; $("mCkMoi").value = ""; $("mStatus").value = "";
+  renderManage();
+  saveNumbers(manageRows);
+});
+$("manageImport").addEventListener("click", () => {
+  const rows = parseList($("mBulk").value);
+  if (!rows.length) { setStatus("Không có dữ liệu hợp lệ"); return; }
+  manageRows = manageRows.concat(rows);
+  $("mBulk").value = "";
+  renderManage();
+  saveNumbers(manageRows);
+});
+$("manageToCreate").addEventListener("click", () => {
+  const text = manageRows.map(r => {
+    const ck = (r[2] && r[2].trim()) ? r[2] : (r[1] || "");
+    return r[0] + (ck ? "\t" + ck : "") + (r[3] ? "\t" + r[3] : "");
+  }).join("\n");
+  $("inp").value = text;
+  update();
+  document.querySelector('.tab[data-tab="create"]').click();
+});
+$("createFromManaged").addEventListener("click", async () => {
+  if (!manageRows.length) await loadManage();
+  const text = manageRows.map(r => {
+    const ck = (r[2] && r[2].trim()) ? r[2] : (r[1] || "");
+    return r[0] + (ck ? "\t" + ck : "") + (r[3] ? "\t" + r[3] : "");
+  }).join("\n");
+  $("inp").value = text;
+  update();
+});
+
+/* ---- login ---- */
+$("loginForm").addEventListener("submit", async e => {
   e.preventDefault();
-  let ok = false;
-  try { ok = btoa($("pw").value) === "bmdvdGFudGhvbmc="; } catch(err) { ok = false; }
+  const u = $("loginUser").value.trim();
+  const p = $("loginPass").value;
+  const btn = $("loginBtn");
+  btn.disabled = true;
+  const ok = await doLogin(u, p);
+  btn.disabled = false;
   if (ok){
     document.body.classList.add("open");
+    $("userName").textContent = currentTen || currentUser;
+    await loadManage();
+    // restore list for this user
+    const v = (function(){ try { return localStorage.getItem("sodep_list_" + currentUser); } catch(e){ return null; } })();
+    if (v){ $("inp").value = v; }
+    update();
+    const r = (function(){ try { return localStorage.getItem("sodep_list"); } catch(e){ return null; } })();
+    if (r && !$("inp").value) { $("restore").classList.add("show"); }
     setTimeout(() => $("inp").focus(), 50);
   } else {
-    $("err").textContent = "Mật khẩu không đúng";
-    $("pw").value = "";
+    $("loginErr").textContent = "Sai tên đăng nhập hoặc mật khẩu";
+    $("loginPass").value = "";
     const b = document.querySelector("#lock .box");
     b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");
   }
 });
 
-/* ---- init: o nhap mac dinh TRONG ---- */
+$("logout").addEventListener("click", () => {
+  currentUser = null; currentTen = null;
+  document.body.classList.remove("open");
+  $("loginUser").value = ""; $("loginPass").value = "";
+  $("loginErr").textContent = "";
+});
+
+$("restore").addEventListener("click", () => {
+  const v = (function(){ try { return localStorage.getItem("sodep_list_" + currentUser); } catch(e){ return null; } })();
+  if (v){ $("inp").value = v; update(); $("restore").classList.remove("show"); }
+});
+
+/* ---- init ---- */
 $("inp").placeholder = "0846 74 7979\t800k\n0822 88 8085\t150k";
 $("inp").value = "";
 update();
-if (store.get()) $("restore").classList.add("show");
-
-$("restore").addEventListener("click", () => {
-  const v = store.get();
-  if (v){ $("inp").value = v; update(); $("restore").classList.remove("show"); }
-});
 </script>
 </body>
 </html>
