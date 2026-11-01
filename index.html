@@ -73,6 +73,10 @@
   .mode-badge.online{background:var(--success-soft);color:var(--success);border-color:#bbf7d0}
   .mode-badge.demo{background:var(--warn-soft);color:var(--warn);border-color:#fde68a}
   #topbar .userbox button{padding:6px 12px;font-size:12.5px}
+  .hsd-badge{font-size:12px;font-weight:600;color:var(--muted);background:#f3f4f6;
+             border:1px solid var(--border);border-radius:999px;padding:3px 9px;white-space:nowrap}
+  .hsd-badge.warn{color:var(--warn);background:var(--warn-soft);border-color:#fde68a}
+  .hsd-badge.danger{color:var(--danger);background:var(--danger-soft);border-color:#fecaca}
 
   /* ---- tabs ---- */
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);padding:0 4px}
@@ -184,7 +188,13 @@
   .status{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:6px;min-height:16px}
   #limitsInfo{color:var(--text)}
   #limitsInfo:hover{color:var(--primary)}
-  .legend{font-size:12px;color:var(--muted);margin-top:2px}
+  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .legend-item{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
+               background:#f3f4f6;font-size:12px;font-weight:600;color:var(--text)}
+  .legend-item .dot{width:8px;height:8px;border-radius:50%}
+  .legend-item .dot.green{background:var(--success)}
+  .legend-item .dot.gray{background:#cbd5e1}
+  .legend-item .dot.red{background:var(--danger)}
 
   #checkProgress{display:none;margin-top:8px;height:6px;background:#eef2f7;border-radius:999px;overflow:hidden}
   #checkProgressBar{height:100%;width:0%;background:var(--primary);transition:width .2s;border-radius:999px}
@@ -218,7 +228,7 @@
     <form class="box" id="loginForm" autocomplete="off">
       <div class="ic">🔒</div>
       <h2 id="authTitle">Đăng nhập</h2>
-      <p class="sub" id="authSub">Nhập tài khoản để truy cập Tool</p>
+      <p class="sub" id="authSub">Tên đăng nhập và mật khẩu</p>
       <input type="text" id="loginUser" placeholder="Tên đăng nhập" autofocus>
       <input type="password" id="loginPass" placeholder="Mật khẩu">
       <input type="text" id="regTen" placeholder="Tên hiển thị (đăng ký)" style="display:none">
@@ -245,6 +255,7 @@
         <span id="modeBadge" class="mode-badge demo">Chế độ demo</span>
         <span>Xin chào,</span>
         <span class="name" id="userName">-</span>
+        <span id="hsdBadge" class="hsd-badge"></span>
         <button id="logout" class="ghost">Đăng xuất</button>
       </div>
     </div>
@@ -302,7 +313,11 @@
           <button id="manageAdd">+ Thêm số</button>
           <span class="count" id="manageCount">0 số</span>
         </div>
-        <div class="legend">🟩 Còn (đã check hôm nay) · ⬜ Còn (trạng thái cũ/chưa check) · 🟥 Hết</div>
+        <div class="legend">
+          <span class="legend-item"><i class="dot green"></i>Còn (đã check hôm nay)</span>
+          <span class="legend-item"><i class="dot gray"></i>Còn (trạng thái cũ)</span>
+          <span class="legend-item"><i class="dot red"></i>Hết</span>
+        </div>
         <div class="status" id="manageStatus"></div>
         <div id="checkProgress" style="display:none;margin-top:6px;height:8px;background:#e8effa;border-radius:4px;overflow:hidden">
           <div id="checkProgressBar" style="height:100%;width:0%;background:#1a6fd4;transition:width .2s"></div>
@@ -1047,10 +1062,21 @@ function applyProfileData(data){
   userChecksToday = Number(data.checks_today) || 0;
   const exp = data.expiry || data.expiry_iso || "";
   userExpiry = parseDateISO(exp) || exp;
+  updateHsdBadge();
   const un = $("userName");
   if (un) un.textContent = currentTen || currentUser || "";
   updateLimitsInfo();
   updateStats();
+}
+
+// hien thi HSD gan ten user o topbar
+function updateHsdBadge(){
+  const b = $("hsdBadge");
+  if (!b) return;
+  if (!userExpiry){ b.textContent = ""; b.className = "hsd-badge"; return; }
+  const d = daysLeft(userExpiry);
+  b.textContent = fmtDMY(userExpiry) + (d !== null ? " (còn " + Math.max(0, d) + " ngày)" : "");
+  b.className = "hsd-badge" + (d === null ? "" : (d < 0 ? " danger" : (d <= 3 ? " warn" : "")));
 }
 
 function forceLogout(msg){
