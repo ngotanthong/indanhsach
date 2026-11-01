@@ -302,7 +302,6 @@
         </div>
         <div class="manage-actions">
           <button id="manageAdd">+ Thêm số</button>
-          <button id="manageToCreate" class="ghost">Dùng cho tạo bảng</button>
           <span class="count" id="manageCount">0 số</span>
         </div>
         <div class="status" id="limitsInfo" style="cursor:pointer" title="Bấm để cập nhật lại từ Google Sheet"></div>
@@ -357,10 +356,6 @@
             <button id="print">🖨 In / Lưu PDF</button>
             <button id="png" class="ghost">⬇ Tải PNG</button>
             <button id="clear" class="ghost">Xóa</button>
-          </div>
-          <div class="row">
-            <button id="createFromManaged" class="ghost">Lấy từ danh sách đã quản lý</button>
-            <button id="syncAvailable" class="ghost">Đồng bộ số còn</button>
           </div>
           <div class="opts">
             <label>Màu số<input type="color" id="cSdt" value="#122342"></label>
@@ -868,26 +863,12 @@ function renderManagePoster(){
 
 let manualEdit = false;
 let lastAutoText = "";
-function syncAvailableToCreate(){
-  if (manualEdit) return;
-  const avail = manageRows.filter(r => isAvailableStatus(r[3]));
-  const text = avail.map(r => {
-    const ck = (r[2] && r[2].trim()) ? r[2] : (r[1] || "");
-    return r[0] + (ck ? "\t" + ck : "") + (r[3] ? "\t" + r[3] : "");
-  }).join("\n");
-  if (text !== lastAutoText){
-    $("inp").value = text;
-    lastAutoText = text;
-    update();
-  }
-  renderManagePoster();
-}
 
 /* ================= events: options ================= */
 $("cSdt").addEventListener("input", e => document.documentElement.style.setProperty("--sdt", e.target.value));
 $("cCk").addEventListener("input",  e => document.documentElement.style.setProperty("--ck",  e.target.value));
 $("fs").addEventListener("input",   e => $("poster").style.setProperty("--fs", e.target.value || 31));
-$("inp").addEventListener("input", () => { manualEdit = true; update(); });
+$("inp").addEventListener("input", () => { update(); });
 $("clear").addEventListener("click", () => { $("inp").value = ""; update(); $("inp").focus(); });
 $("file").addEventListener("change", e => {
   const f = e.target.files[0]; if (!f) return;
@@ -961,7 +942,7 @@ $("manageAdd").addEventListener("click", () => {
   renderManagePoster();
   saveNumbers(manageRows);
   checkAllStatus();
-  syncAvailableToCreate();
+  renderManagePoster();
 });
 $("manageImport").addEventListener("click", () => {
   const rows = parseList($("mBulk").value);
@@ -977,33 +958,8 @@ $("manageImport").addEventListener("click", () => {
   renderManagePoster();
   saveNumbers(manageRows);
   checkAllStatus();
-  syncAvailableToCreate();
+  renderManagePoster();
 });
-$("manageToCreate").addEventListener("click", () => {
-  const text = manageRows.map(r => {
-    const ck = (r[2] && r[2].trim()) ? r[2] : (r[1] || "");
-    return r[0] + (ck ? "\t" + ck : "") + (r[3] ? "\t" + r[3] : "");
-  }).join("\n");
-  $("inp").value = text;
-  update();
-  document.querySelector('.tab[data-tab="create"]').click();
-});
-$("createFromManaged").addEventListener("click", async () => {
-  if (!manageRows.length) await loadManage();
-  const text = manageRows.map(r => {
-    const ck = (r[2] && r[2].trim()) ? r[2] : (r[1] || "");
-    return r[0] + (ck ? "\t" + ck : "") + (r[3] ? "\t" + r[3] : "");
-  }).join("\n");
-  $("inp").value = text;
-  manualEdit = true;
-  update();
-});
-
-$("syncAvailable").addEventListener("click", () => {
-  manualEdit = false;
-  syncAvailableToCreate();
-});
-
 /* ---- kiem tra trang thai qua VNPT API (qua GAS) ---- */
 async function checkAllStatus(){
   if (!apiEnabled) { setStatus("Đang ở chế độ demo (không kết nối được GAS)"); return; }
@@ -1068,7 +1024,7 @@ async function checkAllStatus(){
   }
   await saveNumbers(manageRows);
   renderManage();
-  syncAvailableToCreate();
+  renderManagePoster();
   const partial = rowsToCheck.length < manageRows.length;
   setStatus("Đã kiểm tra " + done + " số" + (partial ? " (chạm giới hạn hôm nay)" : ""));
   const lastBtn = $("lastCheckBtn");
@@ -1160,7 +1116,7 @@ async function syncFromSheet(){
       manageRows = fresh;
       renderManage();
       renderManagePoster();
-      syncAvailableToCreate();
+      renderManagePoster();
     }
   } catch(e){}
   await refreshProfile();
