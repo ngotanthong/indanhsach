@@ -689,7 +689,10 @@ async function checkAllStatus(){
       setStatus("Đã đạt giới hạn check hôm nay (" + bc.checks_today + "/" + bc.limit + ")");
       return;
     }
-  } catch(e){}
+    if (bc && bc.ok && bc.allowed === true){
+      // cap nhat so lan con lai
+    }
+  } catch(e){ setStatus("Lỗi beginCheck: " + e.message); }
   const bar = $("checkProgress");
   const barFill = $("checkProgressBar");
   if (bar) bar.style.display = "block";

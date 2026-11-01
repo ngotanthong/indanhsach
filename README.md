@@ -25,14 +25,19 @@ Mặc định `API_URL = ""` trong `index.html`: dữ liệu lưu trong trình d
 1. Mở Google Sheet: https://docs.google.com/spreadsheets/d/16X92ss43OtOJTK9IqhjnzEnesgvWuawdha63_ogNzvw
 2. Extensions → Apps Script, dán nội dung file `gas_backend.gs`, lưu.
 3. Chạy hàm `setup()` một lần (tạo sheet "Users", "Numbers" + user demo).
-4. Deploy → New deployment → Web app → Execute as: Me, Who has access: **Anyone** (không phải "Anyone with Google account") → Deploy.
-5. Nếu đã deploy trước đó, vào Deploy → Manage deployments → ✏️ → Version: New version → Deploy để cập nhật code mới.
+4. **Deploy → New deployment → Web app**:
+   - Execute as: **Me**
+   - Who has access: **Anyone** (⚠️ phải là "Anyone", KHÔNG phải "Anyone with Google account")
+   → Deploy.
+5. Nếu đã deploy trước đó: **Deploy → Manage deployments → ✏️ → Version: New version → Deploy**.
 6. Copy URL (dạng `https://script.google.com/macros/s/.../exec`).
-6. Mở `index.html`, sửa `const API_URL = "";` thành `const API_URL = "URL_VUA_COPY";`, lưu.
-7. Tải lại trang và đăng nhập.
+7. Mở `index.html`, sửa `const API_URL = "";` thành `const API_URL = "URL_VUA_COPY";`, lưu.
+8. Tải lại trang và đăng nhập.
+
+> ⚠️ Nếu để "Anyone with Google account", request từ web bị chuyển hướng tới trang đăng nhập Google (HTTP 302) → auto-check và đăng nhập Sheet không hoạt động, tool tự về chế độ demo.
 
 ### Cấu trúc Google Sheet
-- Sheet `Users`: cột A = username, B = password, C = tên hiển thị.
+- Sheet `Users`: A = username, B = password, C = tên, D = limit_list, E = limit_check, F = checks_today, G = last_check_date, H = expiry_date. (Giới hạn chỉnh trực tiếp trong sheet.)
 - Sheet `Numbers`: cột A = username, B = số thuê bao, C = cam kết gốc, D = cam kết mới, E = trạng thái.
 
 ## Các file trong repo
