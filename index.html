@@ -180,6 +180,7 @@
   .addtabs{display:flex;gap:6px;margin:12px 0 14px;background:#f3f4f6;padding:4px;border-radius:10px;width:max-content;max-width:100%}
   .addtab{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
   .addtab.active{background:var(--primary);color:#fff}
+  .bulk-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
   .manage-cards{display:none}
   .mcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px;
           display:flex;flex-direction:column;gap:8px;margin-top:8px}
@@ -358,13 +359,13 @@
         <div id="manageCards" class="manage-cards"></div>
 
         <div id="addTabBulk">
-        <div class="bulk">
-          <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
-          <textarea id="mBulk" spellcheck="false" placeholder="0846 74 7979	1500k"></textarea>
-          <div class="manage-actions">
-            <button id="manageImport" class="ghost">Nhập từ text</button>
+          <div class="bulk-card">
+            <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
+            <textarea id="mBulk" spellcheck="false" placeholder="0846 74 7979	1500k"></textarea>
+            <div class="manage-actions">
+              <button id="manageImport" class="ghost">Nhập từ text</button>
+            </div>
           </div>
-        </div>
         </div>
 
         <div style="margin-top:14px">
