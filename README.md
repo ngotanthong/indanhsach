@@ -9,7 +9,7 @@ Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp Vi
   - Không có MGT: dùng thử **3 ngày + 3 số**.
   - Người giới thiệu không giới hạn ngày thì giữ nguyên (không bị giảm).
 - Giới hạn số lượng số trong danh sách (`limit_list`) và **tổng số điện thoại được check mỗi ngày** (`limit_check`, mỗi số chỉ tính **1 lần/ngày**, check lại cùng số không trừ thêm). Để **trống** hoặc ghi "không giới hạn" = ∞. Cột F `checks_today` lưu số số đã check trong ngày, cột I `checked_today` lưu danh sách số đó và tự reset sang ngày mới.
-- Thông tin **giới hạn / số đã check / hạn dùng** hiển thị trên web đọc **trực tiếp từ Google Sheet**, tự cập nhật mỗi 30 giây (và khi quay lại tab). Bấm vào dòng thông tin để cập nhật ngay lập tức, không cần tải lại trang. Sửa cột D/E/H trong Sheet là web đổi theo.
+- Thông tin **giới hạn / số đã check / hạn dùng** hiển thị qua thẻ **Thống kê** (trang Quản lý số) đọc **trực tiếp từ Google Sheet**, tự cập nhật mỗi 30 giây (và khi quay lại tab). Sửa cột D/E/H trong Sheet là web đổi theo. (Dòng dòng “Giới hạn: …” cũ đã ẩn, thay bằng progress bar trong stats.)
 - Tài khoản hết hạn (theo giờ máy) sẽ **tự đăng xuất** ngay khi web phát hiện.
 - Mỗi user có **danh sách số riêng**, lưu/tải từ Google Sheet.
 - Hiển thị tên user ở góc trên bên phải sau khi đăng nhập.

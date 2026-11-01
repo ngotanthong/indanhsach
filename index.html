@@ -134,8 +134,7 @@
   .cell.sdt{color:var(--sdt)}
   .cell.ck{color:var(--ck)}
 
-  /* ---- stats ---- */
-  .stats-card{background:linear-gradient(180deg,#fff,#fafbfc);border:1px solid var(--border);
+  /* ---- stats ---- */  .stats-card{background:linear-gradient(180deg,#fff,#fafbfc);border:1px solid var(--border);
               border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
   .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
   .stat-tile{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px}
@@ -220,7 +219,6 @@
       <div class="ic">🔒</div>
       <h2 id="authTitle">Đăng nhập</h2>
       <p class="sub" id="authSub">Nhập tài khoản để truy cập Tool</p>
-      <p style="font-size:11px;color:#6b7a8d;margin-top:-10px;margin-bottom:10px">Demo: ngotanthong / ngotanthong</p>
       <input type="text" id="loginUser" placeholder="Tên đăng nhập" autofocus>
       <input type="password" id="loginPass" placeholder="Mật khẩu">
       <input type="text" id="regTen" placeholder="Tên hiển thị (đăng ký)" style="display:none">
@@ -304,7 +302,6 @@
           <button id="manageAdd">+ Thêm số</button>
           <span class="count" id="manageCount">0 số</span>
         </div>
-        <div class="status" id="limitsInfo" style="cursor:pointer" title="Bấm để cập nhật lại từ Google Sheet"></div>
         <div class="legend">🟩 Còn (đã check hôm nay) · ⬜ Còn (trạng thái cũ/chưa check) · 🟥 Hết</div>
         <div class="status" id="manageStatus"></div>
         <div id="checkProgress" style="display:none;margin-top:6px;height:8px;background:#e8effa;border-radius:4px;overflow:hidden">
