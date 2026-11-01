@@ -187,6 +187,14 @@
           <div class="manage-actions">
             <button id="manageImport" class="ghost">Nhập từ text</button>
           </div>
+
+        <div style="margin-top:14px">
+          <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Xem trước poster (chỉ số còn)</h2>
+          <div class="stage" style="container-type:inline-size">
+            <div class="poster" id="posterM">
+              <img id="bgM" src="bckground.jpg" alt="poster">
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -211,6 +219,7 @@
           </div>
           <div class="row">
             <button id="createFromManaged" class="ghost">Lấy từ danh sách đã quản lý</button>
+            <button id="syncAvailable" class="ghost">Đồng bộ số còn</button>
           </div>
           <div class="opts">
             <label>Màu số<input type="color" id="cSdt" value="#122342"></label>
@@ -386,13 +395,13 @@ function render(){
   $("count").textContent = DATA.length + " số";
 }
 
-function addCell(x, y, txt, cls){
+function addCell(x, y, txt, cls, container){
   const el = document.createElement("div");
   el.className = "cell " + cls;
   el.style.left = (x / W * 100) + "%";
   el.style.top  = (y / H * 100) + "%";
   el.textContent = txt;
-  $("poster").appendChild(el);
+  (container || $("poster")).appendChild(el);
 }
 
 function update(){
@@ -441,14 +450,53 @@ function renderManage(){
 async function loadManage(){
   manageRows = await loadNumbers();
   renderManage();
+  renderManagePoster();
   setStatus("Đã tải " + manageRows.length + " số");
+}
+
+function isAvailableStatus(v){
+  const s = String(v||"").toLowerCase();
+  return s.includes("còn") || s === "con" || s.includes("available");
+}
+
+function renderManagePoster(){
+  const poster = $("posterM");
+  if (!poster) return;
+  poster.querySelectorAll(".cell").forEach(e => e.remove());
+  const avail = manageRows.filter(r => isAvailableStatus(r[3]));
+  avail.forEach((row, i) => {
+    const stt = i + 1; if (stt > 30) return;
+    const bi = stt <= 10 ? 0 : stt <= 20 ? 1 : 2;
+    const b = BLOCKS[bi];
+    const y = ROW_Y[stt - b.start];
+    addCell(b.xSdt, y, row[0], "sdt", poster);
+    const ck = (row[2] && row[2].trim()) ? row[2] : (row[1] || "");
+    addCell(b.xCk,  y, ck, "ck", poster);
+  });
+}
+
+let manualEdit = false;
+let lastAutoText = "";
+function syncAvailableToCreate(){
+  if (manualEdit) return;
+  const avail = manageRows.filter(r => isAvailableStatus(r[3]));
+  const text = avail.map(r => {
+    const ck = (r[2] && r[2].trim()) ? r[2] : (r[1] || "");
+    return r[0] + (ck ? "\t" + ck : "") + (r[3] ? "\t" + r[3] : "");
+  }).join("\n");
+  if (text !== lastAutoText){
+    $("inp").value = text;
+    lastAutoText = text;
+    update();
+  }
+  renderManagePoster();
 }
 
 /* ================= events: options ================= */
 $("cSdt").addEventListener("input", e => document.documentElement.style.setProperty("--sdt", e.target.value));
 $("cCk").addEventListener("input",  e => document.documentElement.style.setProperty("--ck",  e.target.value));
 $("fs").addEventListener("input",   e => $("poster").style.setProperty("--fs", e.target.value || 31));
-$("inp").addEventListener("input", update);
+$("inp").addEventListener("input", () => { manualEdit = true; update(); });
 $("clear").addEventListener("click", () => { $("inp").value = ""; update(); $("inp").focus(); });
 $("file").addEventListener("change", e => {
   const f = e.target.files[0]; if (!f) return;
@@ -507,8 +555,10 @@ $("manageAdd").addEventListener("click", () => {
   manageRows.push([sdt, ckGoc, ckMoi, ""]);
   $("mSdt").value = ""; $("mCkGoc").value = ""; $("mCkMoi").value = "";
   renderManage();
+  renderManagePoster();
   saveNumbers(manageRows);
   checkAllStatus();
+  syncAvailableToCreate();
 });
 $("manageImport").addEventListener("click", () => {
   const rows = parseList($("mBulk").value);
@@ -516,8 +566,10 @@ $("manageImport").addEventListener("click", () => {
   manageRows = manageRows.concat(rows);
   $("mBulk").value = "";
   renderManage();
+  renderManagePoster();
   saveNumbers(manageRows);
   checkAllStatus();
+  syncAvailableToCreate();
 });
 $("manageToCreate").addEventListener("click", () => {
   const text = manageRows.map(r => {
@@ -535,7 +587,13 @@ $("createFromManaged").addEventListener("click", async () => {
     return r[0] + (ck ? "\t" + ck : "") + (r[3] ? "\t" + r[3] : "");
   }).join("\n");
   $("inp").value = text;
+  manualEdit = true;
   update();
+});
+
+$("syncAvailable").addEventListener("click", () => {
+  manualEdit = false;
+  syncAvailableToCreate();
 });
 
 /* ---- kiem tra trang thai qua VNPT API (qua GAS) ---- */
@@ -562,6 +620,8 @@ async function checkAllStatus(){
     renderManage();
   }
   await saveNumbers(manageRows);
+  renderManage();
+  syncAvailableToCreate();
   setStatus("Đã kiểm tra " + done + " số");
   btn.disabled = false;
 }
