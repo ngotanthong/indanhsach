@@ -821,9 +821,12 @@ async function checkAllStatus(){
   if (!manageRows.length) { setStatus("Không có số để kiểm tra"); return; }
 
   let rowsToCheck = manageRows;
+  // uu tien so chua co trang thai / loi de khong bi "doi" mai o cuoi danh sach khi limit nho
+  const prio = r => (!r[3] || /lỗi/i.test(String(r[3]))) ? 0 : 1;
+  const ordered = manageRows.slice().sort((a, b) => prio(a) - prio(b));
   // xin phep check theo danh sach so (moi so chi tinh 1 lan/ngay)
   try {
-    const bc = await apiCall({ action: "beginCheck", username: currentUser, nums: manageRows.map(r => r[0]) });
+    const bc = await apiCall({ action: "beginCheck", username: currentUser, nums: ordered.map(r => r[0]) });
     if (bc && bc.ok === false && bc.error === "expired"){
       setStatus("Tài khoản đã hết hạn (" + fmtDMY(bc.expiry) + ")");
       return;
