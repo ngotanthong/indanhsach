@@ -675,11 +675,29 @@ async function checkAllStatus(){
 }
 // tu dong check khi vao web + dinh ky 15 phut
 let checkTimer = null;
+let syncTimer = null;
+async function syncFromSheet(){
+  if (!apiEnabled) return;
+  try {
+    const fresh = await loadNumbers();
+    if (JSON.stringify(fresh) !== JSON.stringify(manageRows)){
+      manageRows = fresh;
+      renderManage();
+      renderManagePoster();
+      syncAvailableToCreate();
+    }
+  } catch(e){}
+}
 function startAutoCheck(){
   if (checkTimer) clearInterval(checkTimer);
+  if (syncTimer) clearInterval(syncTimer);
   checkAllStatus();
-  checkTimer = setInterval(checkAllStatus, 15 * 60 * 1000);
+  checkTimer = setInterval(async () => { await syncFromSheet(); checkAllStatus(); }, 15 * 60 * 1000);
+  syncTimer = setInterval(syncFromSheet, 5 * 60 * 1000);
 }
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") syncFromSheet();
+});
 
 /* ---- login ---- */
 $("loginForm").addEventListener("submit", async e => {
@@ -712,6 +730,7 @@ $("loginForm").addEventListener("submit", async e => {
 
 $("logout").addEventListener("click", () => {
   if (checkTimer) { clearInterval(checkTimer); checkTimer = null; }
+  if (syncTimer) { clearInterval(syncTimer); syncTimer = null; }
   currentUser = null; currentTen = null;
   document.body.classList.remove("open");
   $("loginUser").value = ""; $("loginPass").value = "";
