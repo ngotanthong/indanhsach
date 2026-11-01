@@ -364,6 +364,16 @@ function looksMoney(t){
 }
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function statusStyle(v){
+  const s = String(v||"").toLowerCase();
+  if (s.includes("còn") || s === "con" || s.includes("available")) {
+    return "background:#16a34a;color:#fff;border:none;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
+  }
+  if (s.includes("hết") || s.includes("het") || s.includes("đã bán") || s.includes("da ban") || s.includes("sold")) {
+    return "background:#dc2626;color:#fff;border:none;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
+  }
+  return "background:#e8effa;color:#1a4f9c;border:1px solid #c7d4e4;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
+}
 
 /* ================= render poster ================= */
 function render(){
@@ -409,7 +419,7 @@ function renderManage(){
       <td><input type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0"></td>
       <td><input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1"></td>
       <td><input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2"></td>
-      <td><input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3"></td>
+      <td><input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" style="${statusStyle(r[3])}"></td>
       <td><button class="danger" data-del="${i}" style="padding:4px 6px;font-size:12px;min-width:0;flex:0 0 auto">Xóa</button></td>`;
     tb.appendChild(tr);
   });
@@ -418,6 +428,7 @@ function renderManage(){
       const i = +e.target.dataset.i, f = +e.target.dataset.f;
       if (!manageRows[i]) return;
       manageRows[i][f] = e.target.value;
+      if (f === 3) e.target.style.cssText = statusStyle(e.target.value);
       saveNumbers(manageRows);
     });
   });
@@ -573,6 +584,7 @@ $("loginForm").addEventListener("submit", async e => {
     document.body.classList.add("open");
     $("userName").textContent = currentTen || currentUser;
     await loadManage();
+    await checkAllStatus();
     // restore list for this user
     const v = (function(){ try { return localStorage.getItem("sodep_list_" + currentUser); } catch(e){ return null; } })();
     if (v){ $("inp").value = v; }
