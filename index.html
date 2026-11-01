@@ -49,6 +49,10 @@
   #topbar .userbox{display:flex;align-items:center;gap:10px;font-size:13px;color:#1b2735}
   #topbar .userbox .name{font-weight:700;color:#1a6fd4}
   #topbar .userbox button{flex:0 0 auto;min-width:0;padding:6px 12px;font-size:12px}
+  .mode-badge{font-size:11px;font-weight:700;padding:4px 9px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
+  .mode-badge.online{background:#dcfce7;color:#15803d;border-color:#86efac}
+  .mode-badge.demo{background:#fef3c7;color:#b45309;border-color:#fcd34d}
+  .mode-badge.off{background:#fee2e2;color:#b91c1c;border-color:#fca5a5}
 
   /* ---- tabs ---- */
   .tabs{display:flex;gap:8px}
@@ -166,6 +170,7 @@
     <div id="topbar">
       <span class="title">Tools tạo danh sách số</span>
       <div class="userbox">
+        <span id="modeBadge" class="mode-badge demo">Chế độ demo</span>
         <span>Xin chào,</span>
         <span class="name" id="userName">-</span>
         <button id="logout" class="ghost">Đăng xuất</button>
@@ -277,6 +282,7 @@
 // Dán URL Web App của Google Apps Script (deploy) vào đây. Để trống = chế độ demo (lưu trong trình duyệt).
 const API_URL = "https://script.google.com/macros/s/AKfycbwY1hZr42h-0rDr8NNsDPp0MuwnEEYNtfPtHDF5iwReA-pJ3i-kspNfbVVI5AInXZ3r7w/exec";
 let apiEnabled = !!API_URL;
+let apiOnline = false;
 const DEMO_USERS = { "ngotanthong": { password: "ngotanthong", ten: "ngotanthong", limit_list: 3, limit_check: "không giới hạn" } };
 
 const W = 1448, H = 1086;
@@ -312,6 +318,7 @@ function seedDemoUsers(){
   if (changed) saveUsersLocal(u);
 }
 seedDemoUsers();
+updateModeBadge();
 
 function manageKey(u){ return "sodep_manage_" + u; }
 
@@ -322,11 +329,29 @@ async function apiCall(payload){
     if (k === "rows") params.set("data", JSON.stringify(payload.rows));
     else params.set(k, payload[k] == null ? "" : payload[k]);
   }
-  const res = await fetch(API_URL + "?" + params.toString(), { method: "GET", credentials: "omit" });
-  if (!res.ok) throw new Error("HTTP " + res.status);
-  const text = await res.text();
-  try { return JSON.parse(text); }
-  catch(e){ throw new Error("Phản hồi không phải JSON (có thể GAS chưa public 'Anyone')"); }
+  try {
+    const res = await fetch(API_URL + "?" + params.toString(), { method: "GET", credentials: "omit" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const text = await res.text();
+    let data;
+    try { data = JSON.parse(text); }
+    catch(e){ throw new Error("Phản hồi không phải JSON (có thể GAS chưa public 'Anyone')"); }
+    apiOnline = true;
+    updateModeBadge();
+    return data;
+  } catch(e){
+    apiOnline = false;
+    updateModeBadge();
+    throw e;
+  }
+}
+
+function updateModeBadge(){
+  const b = $("modeBadge");
+  if (!b) return;
+  if (!apiEnabled){ b.textContent = "Chế độ demo"; b.className = "mode-badge demo"; }
+  else if (apiOnline){ b.textContent = "✓ Google Sheet"; b.className = "mode-badge online"; }
+  else { b.textContent = "Chưa kết nối Sheet"; b.className = "mode-badge off"; }
 }
 
 async function doLogin(username, password){
@@ -930,7 +955,8 @@ $("loginForm").addEventListener("submit", async e => {
           userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 };
           userExpiry = parseDateISO(data.expiry) || "";
           registerNotice = "Đăng ký thành công! Bạn được " +
-            (data.days === 30 ? "30 ngày, tối đa 10 số." : "dùng thử 3 ngày, tối đa 3 số.");
+            (data.days === 30 ? "30 ngày, tối đa 10 số." : "dùng thử 3 ngày, tối đa 3 số.") +
+            (apiOnline ? " (đã lưu vào Google Sheet)" : " (chưa kết nối được Sheet!)");
           if (data.referrer && data.referrer.ok){
             registerNotice += data.referrer.unlimited
               ? " Người giới thiệu (" + esc(data.referrer.ten) + ") không giới hạn ngày."
@@ -951,7 +977,8 @@ $("loginForm").addEventListener("submit", async e => {
         const exp = addDaysISO(todayISO(), hasRef ? 30 : 3);
         users[u] = { password: p, ten: ten, limit_list: hasRef ? 10 : 3, limit_check: 10, expiry: exp, ref: ref };
         registerNotice = "Đăng ký thành công! Bạn được " +
-          (hasRef ? "30 ngày, tối đa 10 số." : "dùng thử 3 ngày, tối đa 3 số.");
+          (hasRef ? "30 ngày, tối đa 10 số." : "dùng thử 3 ngày, tối đa 3 số.") +
+          " (chỉ lưu trên trình duyệt — chế độ demo)";
         if (hasRef){
           const rr = users[ref];
           const rExp = parseDateISO(rr.expiry);
