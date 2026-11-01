@@ -177,6 +177,9 @@
   .manage-grid label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
   .manage-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}
   .manage-actions button{flex:0 0 auto;min-width:110px}
+  .addtabs{display:flex;gap:6px;margin:12px 0 14px;background:#f3f4f6;padding:4px;border-radius:10px;width:max-content;max-width:100%}
+  .addtab{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .addtab.active{background:var(--primary);color:#fff}
   .manage-cards{display:none}
   .mcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px;
           display:flex;flex-direction:column;gap:8px;margin-top:8px}
@@ -234,7 +237,7 @@
     .stage{width:1448px}
     .poster{box-shadow:none;border-radius:0;border:none}
   }
-</style>>
+</style>
 </head>
 <body>
   <div id="lock">
@@ -310,6 +313,11 @@
           </div>
           <div class="stat-foot" id="statFoot"></div>
         </div>
+        <div style="display:flex;gap:6px;margin:12px 0 14px;background:#f3f4f6;padding:4px;border-radius:10px;width:max-content;max-width:100%">
+          <button class="addtab active" data-addtab="single" style="border:0;background:#1a6fd4;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Thêm số từng cái</button>
+          <button class="addtab" data-addtab="bulk" style="border:0;background:transparent;color:#5b6b7f;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Nhập hàng loạt (Excel)</button>
+        </div>
+        <div id="addTabSingle">
         <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr">
           <div>
             <label>Số thuê bao</label>
@@ -327,6 +335,7 @@
         <div class="manage-actions">
           <button id="manageAdd">+ Thêm số</button>
           <span class="count" id="manageCount">0 số</span>
+        </div>
         </div>
         <div class="legend">
           <span class="legend-item"><i class="dot green"></i>Còn (đã check hôm nay)</span>
@@ -348,12 +357,15 @@
         </div>
         <div id="manageCards" class="manage-cards"></div>
 
+        <div id="addTabBulk">
         <div class="bulk">
           <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
           <textarea id="mBulk" spellcheck="false" placeholder="0846 74 7979	1500k"></textarea>
           <div class="manage-actions">
             <button id="manageImport" class="ghost">Nhập từ text</button>
           </div>
+        </div>
+        </div>
 
         <div style="margin-top:14px">
           <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Xem trước poster (chỉ số còn)</h2>
@@ -1002,9 +1014,20 @@ document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () =>
   document.querySelectorAll(".tabpane").forEach(p=>p.classList.remove("active"));
   document.getElementById("tab-" + b.dataset.tab).classList.add("active");
 }));
+document.querySelectorAll(".addtab").forEach(b => b.addEventListener("click", () => {
+  document.querySelectorAll(".addtab").forEach(x=>x.classList.remove("active"));
+  b.classList.add("active");
+  const t = b.dataset.addtab;
+  const single = $("addTabSingle");
+  const bulk = $("addTabBulk");
+  if (single) single.style.display = (t === "single") ? "" : "none";
+  if (bulk) bulk.style.display = (t === "bulk") ? "" : "none";
+}));
 
 /* ---- manage events ---- */
 $("manageAdd").addEventListener("click", () => {
+  const single = $("addTabSingle");
+  if (single) single.style.display = "";
   const sdt = $("mSdt").value.trim();
   const ckGoc = normCK($("mCkGoc").value.trim());
   const ckMoi = normCK($("mCkMoi").value.trim());
