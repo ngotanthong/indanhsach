@@ -250,7 +250,7 @@ function saveNumbers(username, rows) {
 
 // Chuyen CK (text) thanh bucket commit (VND/thang) gan nhat
 function commitBucket(ck) {
-  const BUCKETS = [0, 100000, 150000, 200000, 400000, 600000, 800000];
+  const BUCKETS = [0, 100000, 150000, 200000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000];
   // parse so tien tu chuoi: "800k" -> 800000, "1tr" -> 1000000, "150000" -> 150000
   let n = 0;
   const s = String(ck || "").toLowerCase().replace(/\s/g, "");
@@ -284,7 +284,7 @@ function checkNumber(phone, ck) {
   const target = digits.startsWith("0") ? ("84" + digits.substring(1)) : digits;
 
   // Danh sach bucket commit chuan cua VNPT
-  const ALL_BUCKETS = [100000, 150000, 200000, 400000, 600000, 800000];
+  const ALL_BUCKETS = [100000, 150000, 200000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000];
   // Thu bucket dung truoc (neu co), sau do thu tat ca cac bucket con lai de dam bao chinh xac
   let bucketsToTry = [];
   if (bucket && ALL_BUCKETS.indexOf(bucket) !== -1) bucketsToTry.push(bucket);
@@ -298,7 +298,7 @@ function checkNumber(phone, ck) {
 
   for (let pass = 0; pass < PASSES; pass++) {
     let passFound = false;
-    let passClean = true;
+    let passHasCleanNotFound = false;
     let passHadError = false;
 
     for (let i = 0; i < bucketsToTry.length; i++) {
@@ -309,13 +309,17 @@ function checkNumber(phone, ck) {
       try {
         const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
         const code = resp.getResponseCode();
-        if (code < 200 || code >= 300) { passHadError = true; passClean = false; continue; }
+        if (code < 200 || code >= 300) { passHadError = true; continue; }
         const json = JSON.parse(resp.getContentText());
         const data = (json && json.data) ? json.data : [];
+        const ec = (json && typeof json.errorCode !== "undefined") ? json.errorCode : 0;
+        // errorCode -1 = bucket khong hop le / loi tam thoi -> bo qua bucket nay
+        if (ec === -1) { passHadError = true; continue; }
         const found = Array.isArray(data) && data.some(function (d) {
           return String(d.so_tb || "").replace(/\s/g, "") === target;
         });
         if (found) { passFound = true; break; }
+        passHasCleanNotFound = true;
       } catch (e) {
         passHadError = true; passClean = false;
       }
@@ -324,7 +328,7 @@ function checkNumber(phone, ck) {
 
     if (passFound) { sawAvailable = true; break; }
     if (passHadError) hadError = true;
-    if (passClean) cleanNotFoundPasses++;
+    if (passHasCleanNotFound) cleanNotFoundPasses++;
 
     if (pass < PASSES - 1) Utilities.sleep(500);
   }
