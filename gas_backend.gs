@@ -15,7 +15,7 @@ function setup() {
   let us = ss.getSheetByName(USERS_SHEET);
   if (!us) us = ss.insertSheet(USERS_SHEET);
   us.clear();
-  us.appendRow(["username", "password", "ten", "limit_list", "limit_check", "checks_today", "last_check_date", "expiry_date"]);
+  us.appendRow(["username", "password", "ten", "limit_list", "limit_check", "checks_today", "last_check_date", "expiry_date", "checked_today"]);
   us.appendRow(["ngotanthong", "ngotanthong", "ngotanthong", 3, "không giới hạn", 0, "", ""]);
 
   let ns = ss.getSheetByName(NUMBERS_SHEET);
@@ -37,7 +37,7 @@ function doPost(e) {
   if (action === "check") return jsonOut(checkNumber(data.phone, data.ck));
   if (action === "register") return jsonOut(registerUser(data.username, data.password, data.ten, data.ref));
   if (action === "referrers") return jsonOut(listReferrers());
-  if (action === "beginCheck") return jsonOut(beginCheck(data.username));
+  if (action === "beginCheck") return jsonOut(beginCheck(data.username, data.nums));
   return jsonOut({ ok: false, error: "unknown action" });
 }
 
@@ -54,7 +54,7 @@ function doGet(e) {
   if (action === "check") return jsonOut(checkNumber(p.phone, p.ck));
   if (action === "register") return jsonOut(registerUser(p.username, p.password, p.ten, p.ref));
   if (action === "referrers") return jsonOut(listReferrers());
-  if (action === "beginCheck") return jsonOut(beginCheck(p.username));
+  if (action === "beginCheck") return jsonOut(beginCheck(p.username, p.nums));
   return jsonOut({ ok: true, msg: "running" });
 }
 
@@ -121,7 +121,7 @@ function toDMY(iso) {
 
 function padUser(row) {
   const r = row.slice();
-  while (r.length < 8) r.push("");
+  while (r.length < 9) r.push("");
   if (r[3] === "" || r[3] == null) r[3] = 3;
   if (r[4] === "" || r[4] == null) r[4] = 10;
   if (r[5] === "" || r[5] == null) r[5] = 0;
@@ -332,33 +332,107 @@ function registerUser(username, password, ten, ref) {
     referrer: refInfo };
 }
 
-function beginCheck(username) {
+// Chuan hoa o ngay (co the la Date object hoac chuoi) ve yyyy-MM-dd
+function dayString(v) {
+  if (v instanceof Date) return Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return "";
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? m[1] + "-" + m[2] + "-" + m[3] : s;
+}
+
+function beginCheck(username, numsRaw) {
+  // numsRaw: JSON array cac so can check (giu nguyen chuoi goc)
+  let nums = [];
+  try { nums = JSON.parse(numsRaw || "[]"); } catch (e) { nums = []; }
+  if (!Array.isArray(nums)) nums = [];
+  nums = nums.map(function (x) { return String(x == null ? "" : x); });
+
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const sh = ss.getSheetByName(USERS_SHEET);
   const rows = sh.getDataRange().getValues();
   const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+
   for (let i = 1; i < rows.length; i++) {
     const r = padUser(rows[i]);
-    if (String(r[0]).trim() === String(username).trim()) {
-      const exp = normDate(r[7]);
-      if (exp && today > exp) return { ok: false, error: "expired", expiry: toDMY(exp), expiry_iso: exp };
-      const limit = r[4];
-      const unlimited = String(limit).toLowerCase().indexOf("không") !== -1 || String(limit).toLowerCase() === "unlimited" || String(limit).toLowerCase() === "inf";
-      let checks = r[5] || 0;
-      let lastDate = r[6] || "";
-      if (lastDate !== today) { checks = 0; lastDate = today; }
-      if (!unlimited) {
-        const lim = parseInt(limit, 10);
-        if (!isNaN(lim) && checks >= lim) {
-          // save reset date
-          sh.getRange(i + 1, 6, 1, 2).setValues([[checks, lastDate]]);
-          return { ok: true, allowed: false, remaining: 0, limit: limit, checks_today: checks };
-        }
-        checks = checks + 1;
-      }
-      sh.getRange(i + 1, 6, 1, 2).setValues([[checks, lastDate]]);
-      return { ok: true, allowed: true, remaining: unlimited ? "không giới hạn" : (parseInt(limit,10) - checks), limit: limit, checks_today: checks };
+    if (String(r[0]).trim() !== String(username).trim()) continue;
+
+    const exp = normDate(r[7]);
+    if (exp && today > exp) return { ok: false, error: "expired", expiry: toDMY(exp), expiry_iso: exp };
+
+    // Khoa so dien thoai de so sanh (9 so cuoi, bo 84/0 dau)
+    const key = function (s) {
+      const d = String(s || "").replace(/\D/g, "");
+      return d.length > 9 ? d.slice(-9) : d;
+    };
+
+    // Doc danh sach so da check trong ngay tu cot I, vd: "2026-11-01|0901234567,0902345678"
+    let stored = String(r[8] == null ? "" : r[8]);
+    if (stored === "[object Object]") stored = "";
+    const bar = stored.indexOf("|");
+    let checkedDate = bar >= 0 ? stored.slice(0, bar) : "";
+    let checkedList = bar >= 0 ? stored.slice(bar + 1).split(",").filter(Boolean) : [];
+    if (checkedDate !== today) { checkedDate = today; checkedList = []; }
+
+    const seen = {};
+    checkedList.forEach(function (x) { seen[key(x)] = true; });
+
+    const already = [];   // so da check hom nay -> check lai mien phi
+    const fresh = [];     // so moi trong ngay
+    const freshKeys = {};
+    nums.forEach(function (n) {
+      const k = key(n);
+      if (!k) return;
+      if (seen[k]) { already.push(n); return; }
+      if (freshKeys[k]) return;
+      freshKeys[k] = true;
+      fresh.push(n);
+    });
+
+    const limit = r[4];
+    const unlimited = String(limit).toLowerCase().indexOf("không") !== -1 ||
+      String(limit).toLowerCase() === "unlimited" || String(limit).toLowerCase() === "inf";
+    const lim = parseInt(limit, 10);
+
+    let allowedFresh;
+    let remaining;
+    if (unlimited || isNaN(lim)) {
+      allowedFresh = fresh;
+      remaining = "không giới hạn";
+    } else {
+      const left = Math.max(0, lim - checkedList.length);
+      allowedFresh = fresh.slice(0, left);
+      remaining = Math.max(0, left - allowedFresh.length);
     }
+
+    // Ghi lai danh sach so da check
+    const newKeys = {};
+    checkedList.forEach(function (x) { newKeys[key(x)] = true; });
+    allowedFresh.forEach(function (n) {
+      const k = key(n);
+      if (!newKeys[k]) { newKeys[k] = true; checkedList.push(k); }
+    });
+
+    // Dam bao cot I co header
+    if (!sh.getRange(1, 9).getValue()) {
+      try { sh.getRange(1, 9).setValue("checked_today"); } catch (e) {}
+    }
+    sh.getRange(i + 1, 6, 1, 2).setValues([[checkedList.length, today]]);
+    sh.getRange(i + 1, 9).setValue(today + "|" + checkedList.join(","));
+
+    const allowedNumbers = already.concat(allowedFresh);
+    const denied = fresh.slice(allowedFresh.length);
+    return {
+      ok: true,
+      allowed: allowedNumbers.length > 0,
+      allowed_count: allowedFresh.length,
+      allowed_numbers: allowedNumbers,
+      denied_numbers: denied,
+      free_count: already.length,
+      remaining: remaining,
+      limit: limit,
+      checks_today: checkedList.length
+    };
   }
   return { ok: false, error: "user not found" };
 }
