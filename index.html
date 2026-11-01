@@ -73,6 +73,7 @@
   .mode-badge.online{background:var(--success-soft);color:var(--success);border-color:#bbf7d0}
   .mode-badge.demo{background:var(--warn-soft);color:var(--warn);border-color:#fde68a}
   #topbar .userbox button{padding:6px 12px;font-size:12.5px}
+  #topbar .userbox button.logout-icon{padding:0;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:transparent}
   .hsd-badge{font-size:12px;font-weight:600;color:var(--muted);background:#f3f4f6;
              border:1px solid var(--border);border-radius:999px;padding:3px 9px;white-space:nowrap}
   .hsd-badge.warn{color:var(--warn);background:var(--warn-soft);border-color:#fde68a}
@@ -211,6 +212,7 @@
 
   @media (max-width: 760px){
     #app{padding:12px 14px;gap:12px}
+    #topbar .title{display:none}
     .create-wrap{flex-direction:column}
     .panel{width:100%;flex:0 0 auto;position:static}
     .stage{width:100%}
@@ -267,7 +269,9 @@
         <span>Xin chào,</span>
         <span class="name" id="userName">-</span>
         <span id="hsdBadge" class="hsd-badge"></span>
-        <button id="logout" class="ghost">Đăng xuất</button>
+        <button id="logout" class="ghost logout-icon" title="Đăng xuất" aria-label="Đăng xuất">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+        </button>
       </div>
     </div>
 
@@ -910,7 +914,6 @@ function updateStats(){
 
   // footer
   const foot = [];
-  if (userExpiry) foot.push("HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : ""));
   if (listLim !== Infinity && total >= listLim) foot.push("⚠ Đã đạt giới hạn danh sách");
   if (checkLim !== Infinity && checked >= checkLim) foot.push("⚠ Đã đạt giới hạn check hôm nay");
   $("statFoot").textContent = foot.join("  ·  ");
