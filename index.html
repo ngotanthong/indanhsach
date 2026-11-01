@@ -134,7 +134,37 @@
   .cell.sdt{color:var(--sdt)}
   .cell.ck{color:var(--ck)}
 
-  /* ---- manage ---- */
+  /* ---- stats ---- */
+  .stats-card{background:linear-gradient(180deg,#fff,#fafbfc);border:1px solid var(--border);
+              border-radius:var(--radius);padding:14px 16px;margin-bottom:14px}
+  .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px}
+  .stat-tile{background:#fff;border:1px solid var(--border);border-radius:8px;padding:10px 12px}
+  .stat-tile.green{border-left:3px solid var(--success)}
+  .stat-tile.red{border-left:3px solid var(--danger)}
+  .stat-tile.blue{border-left:3px solid var(--primary)}
+  .stat-label{font-size:11.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+  .stat-value{font-size:22px;font-weight:700;color:var(--text);margin-top:2px;line-height:1}
+  .stat-bars{display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+  .stat-bar-row{display:flex;flex-direction:column;gap:4px}
+  .stat-bar-label{font-size:12px;font-weight:600;color:var(--muted);display:flex;justify-content:space-between}
+  .stat-bar{height:8px;background:#eef2f7;border-radius:999px;overflow:hidden}
+  .stat-bar-fill{height:100%;background:var(--success);border-radius:999px;transition:width .3s ease;width:0%}
+  .stat-bar-fill.blue{background:var(--primary)}
+  .stat-dist{margin-bottom:8px}
+  .stat-dist-bar{display:flex;height:10px;border-radius:999px;overflow:hidden;background:#eef2f7}
+  .stat-dist-bar > span{display:block;height:100%;transition:width .3s ease}
+  .stat-dist-bar .seg-green{background:var(--success)}
+  .stat-dist-bar .seg-red{background:var(--danger)}
+  .stat-dist-bar .seg-gray{background:#cbd5e1}
+  .stat-dist-legend{display:flex;gap:14px;margin-top:6px;font-size:12px;color:var(--muted);font-weight:600;flex-wrap:wrap}
+  .stat-dist-legend .dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;vertical-align:middle}
+  .stat-dist-legend .dot.green{background:var(--success)}
+  .stat-dist-legend .dot.red{background:var(--danger)}
+  .stat-dist-legend .dot.gray{background:#cbd5e1}
+  .stat-foot{font-size:12px;color:var(--muted);font-weight:600;margin-top:4px;min-height:16px}
+  @media (max-width: 760px){
+    .stats-grid{grid-template-columns:repeat(2,1fr)}
+  }
   .manage-box{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);
               padding:18px;box-shadow:var(--shadow)}
   .manage-box h2{font-size:16px;margin-bottom:10px;font-weight:600;color:var(--text)}
@@ -229,6 +259,33 @@
     <div id="tab-manage" class="tabpane active">
       <div class="manage-box">
         <h2>Quản lý số của bạn</h2>
+        <div class="stats-card" id="statsCard">
+          <div class="stats-grid">
+            <div class="stat-tile"><div class="stat-label">Tổng số</div><div class="stat-value" id="statTotal">0</div></div>
+            <div class="stat-tile green"><div class="stat-label">Còn</div><div class="stat-value" id="statAvail">0</div></div>
+            <div class="stat-tile red"><div class="stat-label">Hết</div><div class="stat-value" id="statSold">0</div></div>
+            <div class="stat-tile blue"><div class="stat-label">Đã check hôm nay</div><div class="stat-value" id="statChecked">0</div></div>
+          </div>
+          <div class="stat-bars">
+            <div class="stat-bar-row">
+              <div class="stat-bar-label">Danh sách <span id="statListText">0/∞</span></div>
+              <div class="stat-bar"><div class="stat-bar-fill" id="statListFill"></div></div>
+            </div>
+            <div class="stat-bar-row">
+              <div class="stat-bar-label">Check hôm nay <span id="statCheckText">0/∞</span></div>
+              <div class="stat-bar"><div class="stat-bar-fill blue" id="statCheckFill"></div></div>
+            </div>
+          </div>
+          <div class="stat-dist">
+            <div class="stat-dist-bar" id="statDistBar"></div>
+            <div class="stat-dist-legend">
+              <span><i class="dot green"></i>Còn <b id="statAvail2">0</b></span>
+              <span><i class="dot red"></i>Hết <b id="statSold2">0</b></span>
+              <span><i class="dot gray"></i>Chưa rõ <b id="statUnknown">0</b></span>
+            </div>
+          </div>
+          <div class="stat-foot" id="statFoot"></div>
+        </div>
         <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr">
           <div>
             <label>Số thuê bao</label>
@@ -721,6 +778,7 @@ function renderManage(){
   });
   $("manageCount").textContent = manageRows.length + " số";
   updateLimitsInfo();
+  updateStats();
 }
 
 async function loadManage(){
@@ -736,6 +794,55 @@ function updateLimitsInfo(){
   info.textContent = "Giới hạn: " + manageRows.length + "/" + limitText(userLimits.list) + " số"
     + " | Check hôm nay: " + userChecksToday + "/" + limitText(userLimits.check)
     + (userExpiry ? " | HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : "") : "");
+}
+
+function updateStats(){
+  const total = manageRows.length;
+  const avail = manageRows.filter(r => isAvailableStatus(r[3])).length;
+  const sold = manageRows.filter(r => {
+    const s = String(r[3]||"").toLowerCase();
+    return s.includes("hết") || s.includes("het") || s.includes("sold") || s.includes("đã bán") || s.includes("da ban");
+  }).length;
+  const unknown = Math.max(0, total - avail - sold);
+  const checked = userChecksToday;
+
+  $("statTotal").textContent = total;
+  $("statAvail").textContent = avail;
+  $("statSold").textContent = sold;
+  $("statChecked").textContent = checked;
+  $("statAvail2").textContent = avail;
+  $("statSold2").textContent = sold;
+  $("statUnknown").textContent = unknown;
+
+  // progress bars
+  const listLim = toLimitNumber(userLimits && userLimits.list);
+  const checkLim = toLimitNumber(userLimits && userLimits.check);
+  const listPct = listLim === Infinity ? 100 : Math.min(100, Math.round((total / listLim) * 100));
+  const checkPct = checkLim === Infinity ? (checked > 0 ? 100 : 0) : Math.min(100, Math.round((checked / checkLim) * 100));
+  $("statListFill").style.width = listPct + "%";
+  $("statCheckFill").style.width = checkPct + "%";
+  $("statListText").textContent = total + " / " + limitText(listLim);
+  $("statCheckText").textContent = checked + " / " + limitText(checkLim);
+
+  // segmented distribution bar
+  const bar = $("statDistBar");
+  bar.innerHTML = "";
+  const mk = (cls, n) => {
+    const sp = document.createElement("span");
+    sp.className = cls;
+    sp.style.width = (total ? (n / total * 100) : 0) + "%";
+    return sp;
+  };
+  bar.appendChild(mk("seg-green", avail));
+  bar.appendChild(mk("seg-red", sold));
+  bar.appendChild(mk("seg-gray", unknown));
+
+  // footer
+  const foot = [];
+  if (userExpiry) foot.push("HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : ""));
+  if (listLim !== Infinity && total >= listLim) foot.push("⚠ Đã đạt giới hạn danh sách");
+  if (checkLim !== Infinity && checked >= checkLim) foot.push("⚠ Đã đạt giới hạn check hôm nay");
+  $("statFoot").textContent = foot.join("  ·  ");
 }
 
 function isAvailableStatus(v){
@@ -990,6 +1097,7 @@ function applyProfileData(data){
   const un = $("userName");
   if (un) un.textContent = currentTen || currentUser || "";
   updateLimitsInfo();
+  updateStats();
 }
 
 function forceLogout(msg){
@@ -1019,6 +1127,7 @@ async function refreshProfile(showMsg){
   if (!currentUser) return;
   if (!apiEnabled){
     updateLimitsInfo();
+    updateStats();
     if (showMsg) setStatus("Chế độ demo — giới hạn lưu trên trình duyệt");
     return;
   }
