@@ -289,13 +289,13 @@ function checkNumber(phone, ck) {
 
   // Thu lai nhieu lan de tranh ket qua sai do mang/API chay khong on dinh
   const MAX_ATTEMPTS = 3;
-  let lastError = false;
+  let hadError = false;
   let sawAvailable = false;
-  let sawUnavailable = false;
+  let cleanNotFoundAttempts = 0;
 
   for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
     let attemptFound = false;
-    let attemptNotFound = false;
+    let attemptCleanNotFound = false;
     let attemptError = false;
 
     for (let b = 0; b < bucketsToTry.length; b++) {
@@ -313,25 +313,27 @@ function checkNumber(phone, ck) {
           return String(d.so_tb || "").replace(/\s/g, "") === target;
         });
         if (found) { attemptFound = true; break; }
-        else { attemptNotFound = true; }
+        // not found on this bucket; continue trying other buckets
       } catch (e) {
         attemptError = true;
       }
     }
 
     if (attemptFound) { sawAvailable = true; break; }
-    if (attemptError && !attemptNotFound) { lastError = true; }
-    if (attemptNotFound && !attemptFound) { sawUnavailable = true; }
+    if (attemptError) { hadError = true; }
+    else { attemptCleanNotFound = true; cleanNotFoundAttempts++; }
 
     if (attempt < MAX_ATTEMPTS - 1) Utilities.sleep(400);
   }
 
-  // Chi ket luan "Het" khi tat ca cac lan thu deu khong tim thay va khong co loi mang
+  // Chi ket luan "Het" khi it nhat 2 lan thu sach (khong loi) khong tim thay
   if (sawAvailable) return { ok: true, available: true, bucket: bucket };
-  if (lastError && !sawUnavailable) return { ok: false, error: "network" };
-  return { ok: true, available: false, bucket: bucket };
+  if (cleanNotFoundAttempts >= 2) return { ok: true, available: false, bucket: bucket };
+  if (hadError) return { ok: false, error: "network" };
+  // Truong hop chi 1 lan sach khong tim thay va khong loi -> van bao Het (hiem)
+  if (cleanNotFoundAttempts >= 1) return { ok: true, available: false, bucket: bucket };
+  return { ok: false, error: "network" };
 }
-
 
 function pad2(n) { return ("0" + n).slice(-2); }
 
