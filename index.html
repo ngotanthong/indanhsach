@@ -65,8 +65,7 @@
 
   /* ---- top bar ---- */
   #topbar{display:flex;align-items:center;justify-content:space-between;background:var(--card);
-          border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;box-shadow:var(--shadow);
-          flex-wrap:wrap;gap:8px}
+          border:1px solid var(--border);border-radius:var(--radius);padding:10px 16px;box-shadow:var(--shadow)}
   #topbar .title{font-size:15px;font-weight:600;color:var(--text)}
   #topbar .userbox{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--text)}
   #topbar .userbox .name{font-weight:600;color:var(--primary)}
@@ -74,10 +73,6 @@
   .mode-badge.online{background:var(--success-soft);color:var(--success);border-color:#bbf7d0}
   .mode-badge.demo{background:var(--warn-soft);color:var(--warn);border-color:#fde68a}
   #topbar .userbox button{padding:6px 12px;font-size:12.5px}
-  .hsd-badge{font-size:12px;font-weight:600;color:var(--muted);background:#f3f4f6;
-             border:1px solid var(--border);border-radius:999px;padding:3px 9px;white-space:nowrap}
-  .hsd-badge.warn{color:var(--warn);background:var(--warn-soft);border-color:#fde68a}
-  .hsd-badge.danger{color:var(--danger);background:var(--danger-soft);border-color:#fecaca}
 
   /* ---- tabs ---- */
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);padding:0 4px}
@@ -190,32 +185,13 @@
   .status{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:6px;min-height:16px}
   #limitsInfo{color:var(--text)}
   #limitsInfo:hover{color:var(--primary)}
-  .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
-  .legend-item{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
-               background:#f3f4f6;font-size:12px;font-weight:600;color:var(--text)}
-  .legend-item .dot{width:8px;height:8px;border-radius:50%}
-  .legend-item .dot.green{background:var(--success)}
-  .legend-item .dot.red{background:var(--danger)}
-  .legend-item .dot.gray{background:#cbd5e1}
+  .legend{font-size:12px;color:var(--muted);margin-top:2px}
 
   #checkProgress{display:none;margin-top:8px;height:6px;background:#eef2f7;border-radius:999px;overflow:hidden}
   #checkProgressBar{height:100%;width:0%;background:var(--primary);transition:width .2s;border-radius:999px}
 
-  .manage-cards{display:none}
-  .mcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px;
-          display:flex;flex-direction:column;gap:8px}
-  .mcard-head{display:flex;align-items:center;justify-content:space-between}
-  .mcard-stt{font-size:12px;font-weight:700;color:var(--muted)}
-  .mcard label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
-  .mcard label input{font-size:14px}
-  .mcard-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .mcard .mcard-del{padding:4px 10px;font-size:12px}
   @media (max-width: 760px){
-    .mtable{display:none}
-    .manage-cards{display:flex;flex-direction:column;gap:10px;margin-top:8px}
-    .tabs{overflow-x:auto;-webkit-overflow-scrolling:touch}
-    .tab{white-space:nowrap}
-  }
+    #app{padding:12px 14px;gap:12px}
     .create-wrap{flex-direction:column}
     .panel{width:100%;flex:0 0 auto;position:static}
     .stage{width:100%}
@@ -271,7 +247,6 @@
         <span id="modeBadge" class="mode-badge demo">Chế độ demo</span>
         <span>Xin chào,</span>
         <span class="name" id="userName">-</span>
-        <span id="hsdBadge" class="hsd-badge"></span>
         <button id="logout" class="ghost">Đăng xuất</button>
       </div>
     </div>
@@ -289,6 +264,7 @@
             <div class="stat-tile"><div class="stat-label">Tổng số</div><div class="stat-value" id="statTotal">0</div></div>
             <div class="stat-tile green"><div class="stat-label">Còn</div><div class="stat-value" id="statAvail">0</div></div>
             <div class="stat-tile red"><div class="stat-label">Hết</div><div class="stat-value" id="statSold">0</div></div>
+            <div class="stat-tile blue"><div class="stat-label">Đã check hôm nay</div><div class="stat-value" id="statChecked">0</div></div>
           </div>
           <div class="stat-bars">
             <div class="stat-bar-row">
@@ -329,11 +305,7 @@
           <span class="count" id="manageCount">0 số</span>
         </div>
         <div class="status" id="limitsInfo" style="cursor:pointer" title="Bấm để cập nhật lại từ Google Sheet"></div>
-        <div class="legend">
-          <span class="legend-item"><i class="dot green"></i>Còn (đã check hôm nay)</span>
-          <span class="legend-item"><i class="dot gray"></i>Còn (trạng thái cũ)</span>
-          <span class="legend-item"><i class="dot red"></i>Hết</span>
-        </div>
+        <div class="legend">🟩 Còn (đã check hôm nay) · ⬜ Còn (trạng thái cũ/chưa check) · 🟥 Hết</div>
         <div class="status" id="manageStatus"></div>
         <div id="checkProgress" style="display:none;margin-top:6px;height:8px;background:#e8effa;border-radius:4px;overflow:hidden">
           <div id="checkProgressBar" style="height:100%;width:0%;background:#1a6fd4;transition:width .2s"></div>
@@ -345,7 +317,6 @@
           <thead><tr><th style="width:40px">STT</th><th>Số thuê bao</th><th>CK gốc</th><th>CK mới</th><th>Trạng thái</th><th style="width:70px">Xóa</th></tr></thead>
           <tbody id="manageTbody"></tbody>
         </table>
-        <div id="manageCards" class="manage-cards"></div>
 
         <div class="bulk">
           <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
@@ -498,7 +469,6 @@ async function doLogin(username, password){
         userLimits = { list: toLimitNumber(data.limit_list), check: toLimitNumber(data.limit_check) };
         userChecksToday = Number(data.checks_today) || 0;
         userExpiry = parseDateISO(exp) || exp;
-        updateHsdBadge();
         return true;
       }
       if (data && data.error === "expired"){
@@ -521,7 +491,6 @@ async function doLogin(username, password){
         userLimits = { list: toLimitNumber(u[username].limit_list), check: toLimitNumber(u[username].limit_check) };
         userChecksToday = 0;
         userExpiry = parseDateISO(exp) || exp;
-        updateHsdBadge();
         return true;
       }
       return false;
@@ -538,7 +507,6 @@ async function doLogin(username, password){
       userLimits = { list: toLimitNumber(u[username].limit_list), check: toLimitNumber(u[username].limit_check) };
       userChecksToday = 0;
       userExpiry = parseDateISO(exp) || exp;
-      updateHsdBadge();
       return true;
     }
     return false;
@@ -768,33 +736,26 @@ function update(){
 }
 
 /* ================= manage tab ================= */
-function isMobileView(){ return window.innerWidth <= 760; }
-
-function buildManageCard(r, i){
-  const card = document.createElement("div");
-  card.className = "mcard";
-  card.innerHTML = `
-    <div class="mcard-head">
-      <span class="mcard-stt">#${i+1}</span>
-      <button class="danger mcard-del" data-del="${i}">Xóa</button>
-    </div>
-    <label>Số thuê bao<input type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0"></label>
-    <div class="mcard-row">
-      <label>CK gốc<input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1"></label>
-      <label>CK mới<input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2"></label>
-    </div>
-    <label>Trạng thái<input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" style="${statusStyle(r[3], r[4])}" title="${r[4] ? "Check lúc " + esc(r[4]) : "Chưa check hôm nay (trạng thái cũ)"}"></label>
-  `;
-  return card;
-}
-
-function bindManageInputs(){
-  document.querySelectorAll("#manageTbody input, #manageCards input").forEach(inp => {
+function renderManage(){
+  const tb = $("manageTbody");
+  tb.innerHTML = "";
+  manageRows.forEach((r, i) => {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td>${i+1}</td>
+      <td><input type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0"></td>
+      <td><input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1"></td>
+      <td><input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2"></td>
+      <td><input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" style="${statusStyle(r[3], r[4])}" title="${r[4] ? "Check lúc " + esc(r[4]) : "Chưa check hôm nay (trạng thái cũ)"}"></td>
+      <td><button class="danger" data-del="${i}" style="padding:4px 6px;font-size:12px;min-width:0;flex:0 0 auto">Xóa</button></td>`;
+    tb.appendChild(tr);
+  });
+  tb.querySelectorAll("input").forEach(inp => {
     inp.addEventListener("change", e => {
       const i = +e.target.dataset.i, f = +e.target.dataset.f;
       if (!manageRows[i]) return;
       manageRows[i][f] = e.target.value;
       if (f === 3){
+        // sua tay = chua duoc check -> trang thai cu (xam)
         manageRows[i][4] = "";
         e.target.style.cssText = statusStyle(e.target.value, "");
         e.target.title = "Chưa check hôm nay (trạng thái cũ)";
@@ -802,7 +763,7 @@ function bindManageInputs(){
       saveNumbers(manageRows);
     });
   });
-  document.querySelectorAll("#manageTbody button[data-del], #manageCards button[data-del]").forEach(b => {
+  tb.querySelectorAll("button[data-del]").forEach(b => {
     b.addEventListener("click", e => {
       const i = +e.target.dataset.del;
       manageRows.splice(i, 1);
@@ -810,29 +771,7 @@ function bindManageInputs(){
       saveNumbers(manageRows);
     });
   });
-}
-
-function renderManage(){
-  const tb = $("manageTbody");
-  const cards = $("manageCards");
-  if (tb) tb.innerHTML = "";
-  if (cards) cards.innerHTML = "";
-  if (isMobileView() && cards){
-    manageRows.forEach((r, i) => cards.appendChild(buildManageCard(r, i)));
-  } else if (tb) {
-    manageRows.forEach((r, i) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${i+1}</td>
-        <td><input type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0"></td>
-        <td><input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1"></td>
-        <td><input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2"></td>
-        <td><input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" style="${statusStyle(r[3], r[4])}" title="${r[4] ? "Check lúc " + esc(r[4]) : "Chưa check hôm nay (trạng thái cũ)"}"></td>
-        <td><button class="danger" data-del="${i}" style="padding:4px 6px;font-size:12px;min-width:0;flex:0 0 auto">Xóa</button></td>`;
-      tb.appendChild(tr);
-    });
-  }
-  bindManageInputs();
-  if ($("manageCount")) $("manageCount").textContent = manageRows.length + " số";
+  $("manageCount").textContent = manageRows.length + " số";
   updateLimitsInfo();
   updateStats();
 }
@@ -844,29 +783,12 @@ async function loadManage(){
   setStatus("Đã tải " + manageRows.length + " số");
 }
 
-function updateHsdBadge(){
-  const b = $("hsdBadge");
-  if (!b) return;
-  if (!userExpiry){
-    b.textContent = "";
-    b.className = "hsd-badge";
-    return;
-  }
-  const d = daysLeft(userExpiry);
-  const txt = "HSD: " + fmtDMY(userExpiry) + (d !== null ? " (còn " + Math.max(0, d) + " ngày)" : "");
-  b.textContent = txt;
-  b.className = "hsd-badge" + (d !== null && d <= 0 ? " danger" : (d !== null && d <= 3 ? " warn" : ""));
-}
-
 function updateLimitsInfo(){
   const info = $("limitsInfo");
   if (!info) return;
-  const listLim = toLimitNumber(userLimits && userLimits.list);
-  const checkLim = toLimitNumber(userLimits && userLimits.check);
-  const warn = [];
-  if (listLim !== Infinity && manageRows.length >= listLim) warn.push("Giới hạn danh sách đã đạt");
-  if (checkLim !== Infinity && userChecksToday >= checkLim) warn.push("Giới hạn check đã đạt");
-  info.textContent = warn.length ? warn.join(" · ") : "↻ Cập nhật từ Google Sheet";
+  info.textContent = "Giới hạn: " + manageRows.length + "/" + limitText(userLimits.list) + " số"
+    + " | Check hôm nay: " + userChecksToday + "/" + limitText(userLimits.check)
+    + (userExpiry ? " | HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : "") : "");
 }
 
 function updateStats(){
@@ -877,14 +799,17 @@ function updateStats(){
     return s.includes("hết") || s.includes("het") || s.includes("sold") || s.includes("đã bán") || s.includes("da ban");
   }).length;
   const unknown = Math.max(0, total - avail - sold);
+  const checked = userChecksToday;
 
   $("statTotal").textContent = total;
   $("statAvail").textContent = avail;
   $("statSold").textContent = sold;
+  $("statChecked").textContent = checked;
   $("statAvail2").textContent = avail;
   $("statSold2").textContent = sold;
   $("statUnknown").textContent = unknown;
 
+  // progress bars
   const listLim = toLimitNumber(userLimits && userLimits.list);
   const checkLim = toLimitNumber(userLimits && userLimits.check);
   const listPct = listLim === Infinity ? 100 : Math.min(100, Math.round((total / listLim) * 100));
@@ -894,6 +819,7 @@ function updateStats(){
   $("statListText").textContent = total + " / " + limitText(listLim);
   $("statCheckText").textContent = checked + " / " + limitText(checkLim);
 
+  // segmented distribution bar
   const bar = $("statDistBar");
   bar.innerHTML = "";
   const mk = (cls, n) => {
@@ -906,9 +832,12 @@ function updateStats(){
   bar.appendChild(mk("seg-red", sold));
   bar.appendChild(mk("seg-gray", unknown));
 
-  // bo text thong ke trung (da co o limitsInfo phia tren)
-  const foot = $("statFoot");
-  if (foot) foot.textContent = "";
+  // footer
+  const foot = [];
+  if (userExpiry) foot.push("HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : ""));
+  if (listLim !== Infinity && total >= listLim) foot.push("⚠ Đã đạt giới hạn danh sách");
+  if (checkLim !== Infinity && checked >= checkLim) foot.push("⚠ Đã đạt giới hạn check hôm nay");
+  $("statFoot").textContent = foot.join("  ·  ");
 }
 
 function isAvailableStatus(v){
@@ -1097,7 +1026,7 @@ async function checkAllStatus(){
   renderManage();
   renderManagePoster();
   const partial = rowsToCheck.length < manageRows.length;
-  setStatus("Đã kiểm tra xong" + (partial ? " (một số đã chạm giới hạn hôm nay)" : ""));
+  setStatus("Đã kiểm tra " + done + " số" + (partial ? " (chạm giới hạn hôm nay)" : ""));
   const lastBtn = $("lastCheckBtn");
   if (lastBtn) lastBtn.textContent = "Lần check cuối: " + new Date().toLocaleTimeString("vi-VN");
   if (bar) setTimeout(() => { bar.style.display = "none"; }, 1200);
@@ -1123,7 +1052,6 @@ function applyProfileData(data){
   userExpiry = parseDateISO(exp) || exp;
   const un = $("userName");
   if (un) un.textContent = currentTen || currentUser || "";
-  updateHsdBadge();
   updateLimitsInfo();
   updateStats();
 }
@@ -1205,12 +1133,8 @@ function startAutoCheck(){
     if (document.visibilityState === "visible") refreshProfile();
   }, 30 * 1000);
 }
-let resizeTimer = null;
-window.addEventListener("resize", () => {
-  if (resizeTimer) clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    if (document.body.classList.contains("open")) renderManage();
-  }, 200);
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") syncFromSheet();
 });
 
 /* ---- chuyen dang nhap / dang ky ---- */
@@ -1287,7 +1211,6 @@ $("loginForm").addEventListener("submit", async e => {
           userLimits = { list: toLimitNumber(data.limit_list), check: toLimitNumber(data.limit_check) };
           userChecksToday = Number(data.checks_today) || 0;
           userExpiry = parseDateISO(data.expiry) || "";
-          updateHsdBadge();
           registerNotice = "Đăng ký thành công! Bạn được " +
             (data.days === 30 ? "30 ngày, tối đa 10 số." : "dùng thử 3 ngày, tối đa 3 số.") +
             (apiOnline ? " (đã lưu vào Google Sheet)" : " (chưa kết nối được Sheet!)");
@@ -1326,7 +1249,6 @@ $("loginForm").addEventListener("submit", async e => {
         }
         saveUsersLocal(users);
         currentUser = u; currentTen = ten; userLimits = { list: hasRef ? 10 : 3, check: 10 }; userChecksToday = 0; userExpiry = exp; ok = true;
-        updateHsdBadge();
       }
     }
   } else {
