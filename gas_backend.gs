@@ -22,6 +22,8 @@ function setup() {
   if (!ns) ns = ss.insertSheet(NUMBERS_SHEET);
   ns.clear();
   ns.appendRow(["username", "sdt", "ck_goc", "ck_moi", "trang_thai"]);
+  // luu sdt/ck dang text de giu so 0 dau va khoang cach ngat nhi
+  ns.getRange(1, 2, ns.getMaxRows(), 4).setNumberFormat("@");
   SpreadsheetApp.flush();
 }
 
@@ -95,7 +97,9 @@ function saveNumbers(username, rows) {
   if (rows && rows.length) {
     const toAppend = rows.map(r => [username, r[0], r[1] || "", r[2] || "", r[3] || ""]);
     const start = sh.getLastRow() + 1;
-    sh.getRange(start, 1, toAppend.length, 5).setValues(toAppend);
+    const rng = sh.getRange(start, 1, toAppend.length, 5);
+    rng.setNumberFormat("@");
+    rng.setValues(toAppend);
   }
   return { ok: true };
 }
