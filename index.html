@@ -178,6 +178,7 @@
           <button id="manageToCreate" class="ghost">Dùng cho tạo bảng</button>
           <span class="count" id="manageCount">0 số</span>
         </div>
+        <div class="status" id="limitsInfo"></div>
         <div class="status" id="manageStatus"></div>
         <div id="checkProgress" style="display:none;margin-top:6px;height:8px;background:#e8effa;border-radius:4px;overflow:hidden">
           <div id="checkProgressBar" style="height:100%;width:0%;background:#1a6fd4;transition:width .2s"></div>
@@ -196,28 +197,6 @@
           <div class="manage-actions">
             <button id="manageImport" class="ghost">Nhập từ text</button>
           </div>
-
-        <div style="margin-top:14px">
-          <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Giới hạn</h2>
-          <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr">
-            <div>
-              <label>Số lượng danh sách (mặc định 3)</label>
-              <input type="text" id="limitListInput" placeholder="3">
-            </div>
-            <div>
-              <label>Số lần check/ngày ("không giới hạn" = ∞)</label>
-              <input type="text" id="limitCheckInput" placeholder="10 hoặc không giới hạn">
-            </div>
-            <div>
-              <label>Hạn sử dụng (để trống = không hạn)</label>
-              <input type="date" id="expiryInput">
-            </div>
-          </div>
-          <div class="manage-actions">
-            <button id="saveLimits" class="ghost">Lưu giới hạn</button>
-            <span class="count" id="limitsInfo"></span>
-          </div>
-        </div>
 
         <div style="margin-top:14px">
           <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Xem trước poster (chỉ số còn)</h2>
@@ -535,49 +514,10 @@ async function loadManage(){
   renderManage();
   renderManagePoster();
   setStatus("Đã tải " + manageRows.length + " số");
-  // hien thi gioi han
-  const li = $("limitListInput");
-  const ci = $("limitCheckInput");
+  // thong tin gioi han (chi hien thi, sua trong Sheet)
   const info = $("limitsInfo");
-  if (li) li.value = userLimits.list;
-  if (ci) ci.value = userLimits.check;
-  const ei = $("expiryInput");
-  if (ei) ei.value = userExpiry || "";
-  if (info) info.textContent = "Hiện tại: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + userExpiry : "");
+  if (info) info.textContent = "Giới hạn: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + userExpiry : "");
 }
-
-$("saveLimits").addEventListener("click", async () => {
-  const ll = $("limitListInput").value.trim();
-  const lc = $("limitCheckInput").value.trim();
-  const ex = $("expiryInput").value.trim();
-  const newLL = ll === "" ? 3 : (isNaN(parseInt(ll,10)) ? ll : parseInt(ll,10));
-  const newLC = lc === "" ? 10 : lc;
-  if (apiEnabled){
-    try {
-      const d1 = await apiCall({ action: "updateLimits", username: currentUser, limit_list: newLL, limit_check: newLC });
-      if (d1 && d1.ok){ userLimits = { list: d1.limit_list, check: d1.limit_check }; }
-      else { alert("Lưu giới hạn thất bại"); return; }
-      const d2 = await apiCall({ action: "updateExpiry", username: currentUser, expiry: ex });
-      if (d2 && d2.ok) userExpiry = d2.expiry || "";
-    } catch(e){ alert("Lỗi: " + e.message); return; }
-  } else {
-    const u = getUsersLocal();
-    if (u[currentUser]){
-      u[currentUser].limit_list = newLL;
-      u[currentUser].limit_check = newLC;
-      u[currentUser].expiry = ex;
-      saveUsersLocal(u);
-      userLimits = { list: newLL, check: newLC };
-      userExpiry = ex;
-    }
-  }
-  $("limitListInput").value = userLimits.list;
-  $("limitCheckInput").value = userLimits.check;
-  $("expiryInput").value = userExpiry || "";
-  const info = $("limitsInfo");
-  if (info) info.textContent = "Đã lưu. Hiện tại: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + userExpiry : "");
-  setStatus("Đã lưu giới hạn");
-});
 
 function isAvailableStatus(v){
   const s = String(v||"").toLowerCase();

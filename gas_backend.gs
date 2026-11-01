@@ -37,8 +37,6 @@ function doPost(e) {
   if (action === "check") return jsonOut(checkNumber(data.phone, data.ck));
   if (action === "register") return jsonOut(registerUser(data.username, data.password, data.ten));
   if (action === "beginCheck") return jsonOut(beginCheck(data.username));
-  if (action === "updateLimits") return jsonOut(updateLimits(data.username, data.limit_list, data.limit_check));
-  if (action === "updateExpiry") return jsonOut(updateExpiry(data.username, data.expiry));
   return jsonOut({ ok: false, error: "unknown action" });
 }
 
@@ -55,8 +53,6 @@ function doGet(e) {
   if (action === "check") return jsonOut(checkNumber(p.phone, p.ck));
   if (action === "register") return jsonOut(registerUser(p.username, p.password, p.ten));
   if (action === "beginCheck") return jsonOut(beginCheck(p.username));
-  if (action === "updateLimits") return jsonOut(updateLimits(p.username, p.limit_list, p.limit_check));
-  if (action === "updateExpiry") return jsonOut(updateExpiry(p.username, p.expiry));
   return jsonOut({ ok: true, msg: "running" });
 }
 
@@ -232,37 +228,6 @@ function beginCheck(username) {
   return { ok: false, error: "user not found" };
 }
 
-function updateLimits(username, limit_list, limit_check) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  const sh = ss.getSheetByName(USERS_SHEET);
-  const rows = sh.getDataRange().getValues();
-  for (let i = 1; i < rows.length; i++) {
-    if (String(rows[i][0]).trim() === String(username).trim()) {
-      // limit_list
-      let ll = limit_list;
-      if (ll === "" || ll == null) ll = 3;
-      const llNum = parseInt(ll, 10);
-      if (!isNaN(llNum)) ll = llNum;
-      let lc = limit_check;
-      if (lc === "" || lc == null) lc = 10;
-      sh.getRange(i + 1, 4, 1, 2).setValues([[ll, lc]]);
-      return { ok: true, limit_list: ll, limit_check: lc };
-    }
-  }
-  return { ok: false, error: "user not found" };
-}
 
-function updateExpiry(username, expiry) {
-  const ss = SpreadsheetApp.openById(SHEET_ID);
-  const sh = ss.getSheetByName(USERS_SHEET);
-  const rows = sh.getDataRange().getValues();
-  for (let i = 1; i < rows.length; i++) {
-    if (String(rows[i][0]).trim() === String(username).trim()) {
-      sh.getRange(i + 1, 8).setValue(expiry || "");
-      return { ok: true, expiry: expiry || "" };
-    }
-  }
-  return { ok: false, error: "user not found" };
-}
 ```<|end|><|start|>write to=assistant<|channel|>analysis<|message|>Now update README to reflect new features and setup. Let me update README.<|end|><|start|><|start|>assistant to=write<|channel|>analysis <|constrain|>xml<|message|><rfl:parameter name="path">
 /Users/ngotanthong/Dự án VibeCode/PrintList/README.md
