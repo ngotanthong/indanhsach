@@ -101,7 +101,10 @@ function login(username, password) {
     if (String(r[0]).trim() === String(username).trim() &&
         String(r[1]) === String(password)) {
       // kiem tra han su dung (ho tro nhieu dinh dang, chuan hoa ve yyyy-MM-dd)
-      const expRaw = String(r[7] || "").trim();
+      // ho tro ca o Date cua Sheet
+      let expRaw = r[7];
+      if (expRaw instanceof Date) expRaw = Utilities.formatDate(expRaw, Session.getScriptTimeZone(), "dd/MM/yyyy");
+      expRaw = String(expRaw || "").trim();
       const exp = normDate(expRaw);
       if (expRaw && !exp) {
         // ngay khong hop le -> bo qua (coi nhu khong han)

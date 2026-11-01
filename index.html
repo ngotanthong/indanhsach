@@ -424,6 +424,11 @@ function looksMoney(t){
 }
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function fmtDMY(iso){
+  const m = String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return iso || "";
+  return m[3] + "/" + m[2] + "/" + m[1];
+}
 function normCK(v){
   const s = String(v == null ? "" : v).trim();
   if (!s) return "";
@@ -526,7 +531,7 @@ async function loadManage(){
   setStatus("Đã tải " + manageRows.length + " số");
   // thong tin gioi han (chi hien thi, sua trong Sheet)
   const info = $("limitsInfo");
-  if (info) info.textContent = "Giới hạn: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + userExpiry : "");
+  if (info) info.textContent = "Giới hạn: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + fmtDMY(userExpiry) : "");
 }
 
 function isAvailableStatus(v){
