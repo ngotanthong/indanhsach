@@ -15,8 +15,8 @@ function setup() {
   let us = ss.getSheetByName(USERS_SHEET);
   if (!us) us = ss.insertSheet(USERS_SHEET);
   us.clear();
-  us.appendRow(["username", "password", "ten", "limit_list", "limit_check", "checks_today", "last_check_date"]);
-  us.appendRow(["ngotanthong", "ngotanthong", "ngotanthong", 3, "không giới hạn", 0, ""]);
+  us.appendRow(["username", "password", "ten", "limit_list", "limit_check", "checks_today", "last_check_date", "expiry_date"]);
+  us.appendRow(["ngotanthong", "ngotanthong", "ngotanthong", 3, "không giới hạn", 0, "", ""]);
 
   let ns = ss.getSheetByName(NUMBERS_SHEET);
   if (!ns) ns = ss.insertSheet(NUMBERS_SHEET);
@@ -38,6 +38,7 @@ function doPost(e) {
   if (action === "register") return jsonOut(registerUser(data.username, data.password, data.ten));
   if (action === "beginCheck") return jsonOut(beginCheck(data.username));
   if (action === "updateLimits") return jsonOut(updateLimits(data.username, data.limit_list, data.limit_check));
+  if (action === "updateExpiry") return jsonOut(updateExpiry(data.username, data.expiry));
   return jsonOut({ ok: false, error: "unknown action" });
 }
 
@@ -55,6 +56,7 @@ function doGet(e) {
   if (action === "register") return jsonOut(registerUser(p.username, p.password, p.ten));
   if (action === "beginCheck") return jsonOut(beginCheck(p.username));
   if (action === "updateLimits") return jsonOut(updateLimits(p.username, p.limit_list, p.limit_check));
+  if (action === "updateExpiry") return jsonOut(updateExpiry(p.username, p.expiry));
   return jsonOut({ ok: true, msg: "running" });
 }
 
@@ -65,11 +67,12 @@ function jsonOut(obj) {
 
 function padUser(row) {
   const r = row.slice();
-  while (r.length < 7) r.push("");
+  while (r.length < 8) r.push("");
   if (r[3] === "" || r[3] == null) r[3] = 3;
   if (r[4] === "" || r[4] == null) r[4] = 10;
   if (r[5] === "" || r[5] == null) r[5] = 0;
   if (r[6] == null) r[6] = "";
+  if (r[7] == null) r[7] = "";
   return r;
 }
 
@@ -81,9 +84,15 @@ function login(username, password) {
     const r = padUser(rows[i]);
     if (String(r[0]).trim() === String(username).trim() &&
         String(r[1]) === String(password)) {
+      // kiem tra han su dung
+      const exp = String(r[7] || "").trim();
+      if (exp) {
+        const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+        if (today > exp) return { ok: false, error: "expired", expiry: exp };
+      }
       return { ok: true, ten: r[2] || username,
         limit_list: r[3], limit_check: r[4],
-        checks_today: r[5], last_check_date: r[6] };
+        checks_today: r[5], last_check_date: r[6], expiry: r[7] };
     }
   }
   return { ok: false };
@@ -189,8 +198,9 @@ function registerUser(username, password, ten) {
   for (let i = 1; i < rows.length; i++) {
     if (String(rows[i][0]).trim() === username) return { ok: false, error: "exists" };
   }
-  sh.appendRow([username, password, ten || username, 3, 10, 0, ""]);
-  return { ok: true, ten: ten || username, limit_list: 3, limit_check: 10 };
+  const exp = Utilities.formatDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), Session.getScriptTimeZone(), "yyyy-MM-dd");
+  sh.appendRow([username, password, ten || username, 3, 10, 0, "", exp]);
+  return { ok: true, ten: ten || username, limit_list: 3, limit_check: 10, expiry: exp };
 }
 
 function beginCheck(username) {
@@ -237,6 +247,19 @@ function updateLimits(username, limit_list, limit_check) {
       if (lc === "" || lc == null) lc = 10;
       sh.getRange(i + 1, 4, 1, 2).setValues([[ll, lc]]);
       return { ok: true, limit_list: ll, limit_check: lc };
+    }
+  }
+  return { ok: false, error: "user not found" };
+}
+
+function updateExpiry(username, expiry) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sh = ss.getSheetByName(USERS_SHEET);
+  const rows = sh.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === String(username).trim()) {
+      sh.getRange(i + 1, 8).setValue(expiry || "");
+      return { ok: true, expiry: expiry || "" };
     }
   }
   return { ok: false, error: "user not found" };

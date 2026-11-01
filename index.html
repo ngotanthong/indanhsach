@@ -199,7 +199,7 @@
 
         <div style="margin-top:14px">
           <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Giới hạn</h2>
-          <div class="manage-grid" style="grid-template-columns:1fr 1fr">
+          <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr">
             <div>
               <label>Số lượng danh sách (mặc định 3)</label>
               <input type="text" id="limitListInput" placeholder="3">
@@ -207,6 +207,10 @@
             <div>
               <label>Số lần check/ngày ("không giới hạn" = ∞)</label>
               <input type="text" id="limitCheckInput" placeholder="10 hoặc không giới hạn">
+            </div>
+            <div>
+              <label>Hạn sử dụng (để trống = không hạn)</label>
+              <input type="date" id="expiryInput">
             </div>
           </div>
           <div class="manage-actions">
@@ -287,6 +291,7 @@ let currentUser = null;
 let currentTen = null;
 let registerMode = false;
 let userLimits = { list: 3, check: 10 };
+let userExpiry = "";
 let manageRows = [];
 
 const $ = id => document.getElementById(id);
@@ -329,7 +334,12 @@ async function doLogin(username, password){
       if (data && data.ok){
         currentUser = username; currentTen = data.ten || username;
         userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 };
+        userExpiry = data.expiry || "";
         return true;
+      }
+      if (data && data.error === "expired"){
+        doLogin._err = "Tài khoản đã hết hạn (" + (data.expiry || "") + ")";
+        return false;
       }
       return false;
     } catch(e){
@@ -340,6 +350,7 @@ async function doLogin(username, password){
         apiEnabled = false;
         currentUser = username; currentTen = u[username].ten || username;
         userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
+        userExpiry = u[username].expiry || "";
         return true;
       }
       return false;
@@ -349,6 +360,7 @@ async function doLogin(username, password){
     if (u[username] && u[username].password === password){
       currentUser = username; currentTen = u[username].ten || username;
       userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
+      userExpiry = u[username].expiry || "";
       return true;
     }
     return false;
@@ -529,34 +541,41 @@ async function loadManage(){
   const info = $("limitsInfo");
   if (li) li.value = userLimits.list;
   if (ci) ci.value = userLimits.check;
-  if (info) info.textContent = "Hiện tại: " + manageRows.length + "/" + userLimits.list + " số";
+  const ei = $("expiryInput");
+  if (ei) ei.value = userExpiry || "";
+  if (info) info.textContent = "Hiện tại: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + userExpiry : "");
 }
 
 $("saveLimits").addEventListener("click", async () => {
   const ll = $("limitListInput").value.trim();
   const lc = $("limitCheckInput").value.trim();
+  const ex = $("expiryInput").value.trim();
   const newLL = ll === "" ? 3 : (isNaN(parseInt(ll,10)) ? ll : parseInt(ll,10));
   const newLC = lc === "" ? 10 : lc;
   if (apiEnabled){
     try {
-      const data = await apiCall({ action: "updateLimits", username: currentUser, limit_list: newLL, limit_check: newLC });
-      if (data && data.ok){ userLimits = { list: data.limit_list, check: data.limit_check }; }
+      const d1 = await apiCall({ action: "updateLimits", username: currentUser, limit_list: newLL, limit_check: newLC });
+      if (d1 && d1.ok){ userLimits = { list: d1.limit_list, check: d1.limit_check }; }
       else { alert("Lưu giới hạn thất bại"); return; }
+      const d2 = await apiCall({ action: "updateExpiry", username: currentUser, expiry: ex });
+      if (d2 && d2.ok) userExpiry = d2.expiry || "";
     } catch(e){ alert("Lỗi: " + e.message); return; }
   } else {
-    // demo: save to local user
     const u = getUsersLocal();
     if (u[currentUser]){
       u[currentUser].limit_list = newLL;
       u[currentUser].limit_check = newLC;
+      u[currentUser].expiry = ex;
       saveUsersLocal(u);
       userLimits = { list: newLL, check: newLC };
+      userExpiry = ex;
     }
   }
   $("limitListInput").value = userLimits.list;
   $("limitCheckInput").value = userLimits.check;
+  $("expiryInput").value = userExpiry || "";
   const info = $("limitsInfo");
-  if (info) info.textContent = "Đã lưu. Hiện tại: " + manageRows.length + "/" + userLimits.list + " số";
+  if (info) info.textContent = "Đã lưu. Hiện tại: " + manageRows.length + "/" + userLimits.list + " số" + (userExpiry ? " | HSD: " + userExpiry : "");
   setStatus("Đã lưu giới hạn");
 });
 
@@ -816,7 +835,7 @@ $("loginForm").addEventListener("submit", async e => {
     if (apiEnabled){
       try {
         const data = await apiCall({ action: "register", username: u, password: p, ten: ten });
-        if (data && data.ok){ ok = true; currentUser = u; currentTen = data.ten || ten; userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 }; }
+        if (data && data.ok){ ok = true; currentUser = u; currentTen = data.ten || ten; userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 }; userExpiry = data.expiry || ""; }
         else { doLogin._err = data && data.error === "exists" ? "Tài khoản đã tồn tại" : "Đăng ký thất bại"; }
       } catch(e){ doLogin._err = e.message; }
     } else {
@@ -824,9 +843,10 @@ $("loginForm").addEventListener("submit", async e => {
       const users = getUsersLocal();
       if (users[u]){ doLogin._err = "Tài khoản đã tồn tại"; }
       else {
-        users[u] = { password: p, ten: ten, limit_list: 3, limit_check: 10 };
+        const exp = new Date(Date.now() + 30*24*60*60*1000).toISOString().slice(0,10);
+        users[u] = { password: p, ten: ten, limit_list: 3, limit_check: 10, expiry: exp };
         saveUsersLocal(users);
-        currentUser = u; currentTen = ten; userLimits = { list: 3, check: 10 }; ok = true;
+        currentUser = u; currentTen = ten; userLimits = { list: 3, check: 10 }; userExpiry = exp; ok = true;
       }
     }
   } else {
