@@ -156,7 +156,7 @@
     <div id="tab-manage" class="tabpane active">
       <div class="manage-box">
         <h2>Quản lý số của bạn</h2>
-        <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr 1fr">
+        <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr">
           <div>
             <label>Số thuê bao</label>
             <input type="text" id="mSdt" placeholder="0846 74 7979">
@@ -168,10 +168,6 @@
           <div>
             <label>Cam kết mới</label>
             <input type="text" id="mCkMoi" placeholder="600k">
-          </div>
-          <div>
-            <label>Trạng thái</label>
-            <input type="text" id="mStatus" placeholder="Còn / Đã bán">
           </div>
         </div>
         <div class="manage-actions">
@@ -507,12 +503,12 @@ $("manageAdd").addEventListener("click", () => {
   const sdt = $("mSdt").value.trim();
   const ckGoc = $("mCkGoc").value.trim();
   const ckMoi = $("mCkMoi").value.trim();
-  const st = $("mStatus").value.trim();
   if (!sdt) return;
-  manageRows.push([sdt, ckGoc, ckMoi, st]);
-  $("mSdt").value = ""; $("mCkGoc").value = ""; $("mCkMoi").value = ""; $("mStatus").value = "";
+  manageRows.push([sdt, ckGoc, ckMoi, ""]);
+  $("mSdt").value = ""; $("mCkGoc").value = ""; $("mCkMoi").value = "";
   renderManage();
   saveNumbers(manageRows);
+  checkAllStatus();
 });
 $("manageImport").addEventListener("click", () => {
   const rows = parseList($("mBulk").value);
@@ -521,6 +517,7 @@ $("manageImport").addEventListener("click", () => {
   $("mBulk").value = "";
   renderManage();
   saveNumbers(manageRows);
+  checkAllStatus();
 });
 $("manageToCreate").addEventListener("click", () => {
   const text = manageRows.map(r => {
