@@ -176,7 +176,6 @@
         </div>
         <div class="manage-actions">
           <button id="manageAdd">+ Thêm số</button>
-          <button id="manageCheck" class="ghost">Kiểm tra trạng thái</button>
           <button id="manageToCreate" class="ghost">Dùng cho tạo bảng</button>
           <span class="count" id="manageCount">0 số</span>
         </div>
@@ -569,7 +568,13 @@ async function checkAllStatus(){
   setStatus("Đã kiểm tra " + done + " số");
   btn.disabled = false;
 }
-$("manageCheck").addEventListener("click", checkAllStatus);
+// tu dong check khi vao web + dinh ky 15 phut
+let checkTimer = null;
+function startAutoCheck(){
+  if (checkTimer) clearInterval(checkTimer);
+  checkAllStatus();
+  checkTimer = setInterval(checkAllStatus, 15 * 60 * 1000);
+}
 
 /* ---- login ---- */
 $("loginForm").addEventListener("submit", async e => {
@@ -584,7 +589,7 @@ $("loginForm").addEventListener("submit", async e => {
     document.body.classList.add("open");
     $("userName").textContent = currentTen || currentUser;
     await loadManage();
-    await checkAllStatus();
+    startAutoCheck();
     // restore list for this user
     const v = (function(){ try { return localStorage.getItem("sodep_list_" + currentUser); } catch(e){ return null; } })();
     if (v){ $("inp").value = v; }
@@ -601,6 +606,7 @@ $("loginForm").addEventListener("submit", async e => {
 });
 
 $("logout").addEventListener("click", () => {
+  if (checkTimer) { clearInterval(checkTimer); checkTimer = null; }
   currentUser = null; currentTen = null;
   document.body.classList.remove("open");
   $("loginUser").value = ""; $("loginPass").value = "";
