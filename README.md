@@ -3,7 +3,8 @@
 Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp VinaPhone** (30 dòng, chia 3 khối × 10 dòng), xuất ra ảnh/PDF để in.
 
 ## Tính năng mới
-- Đăng nhập bằng **tên đăng nhập + mật khẩu** (lưu trong Google Sheet).
+- Đăng nhập / **đăng ký** tài khoản (lưu trong Google Sheet).
+- Giới hạn số lượng số trong danh sách (mặc định 3) và số lần check/ngày (đặt "không giới hạn" = ∞).
 - Mỗi user có **danh sách số riêng**, lưu/tải từ Google Sheet.
 - Hiển thị tên user ở góc trên bên phải sau khi đăng nhập.
 - Hai tab: **Quản lý số** (thêm/sửa/xóa list số, kiểm tra trạng thái tự động qua VNPT API) và **Nhập số để tạo bảng** (tạo poster).

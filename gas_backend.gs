@@ -15,8 +15,8 @@ function setup() {
   let us = ss.getSheetByName(USERS_SHEET);
   if (!us) us = ss.insertSheet(USERS_SHEET);
   us.clear();
-  us.appendRow(["username", "password", "ten"]);
-  us.appendRow(["ngotanthong", "ngotanthong", "ngotanthong"]);
+  us.appendRow(["username", "password", "ten", "limit_list", "limit_check", "checks_today", "last_check_date"]);
+  us.appendRow(["ngotanthong", "ngotanthong", "ngotanthong", 3, "không giới hạn", 0, ""]);
 
   let ns = ss.getSheetByName(NUMBERS_SHEET);
   if (!ns) ns = ss.insertSheet(NUMBERS_SHEET);
@@ -35,6 +35,9 @@ function doPost(e) {
   if (action === "list") return jsonOut(listNumbers(data.username));
   if (action === "save") return jsonOut(saveNumbers(data.username, data.rows));
   if (action === "check") return jsonOut(checkNumber(data.phone, data.ck));
+  if (action === "register") return jsonOut(registerUser(data.username, data.password, data.ten));
+  if (action === "beginCheck") return jsonOut(beginCheck(data.username));
+  if (action === "updateLimits") return jsonOut(updateLimits(data.username, data.limit_list, data.limit_check));
   return jsonOut({ ok: false, error: "unknown action" });
 }
 
@@ -49,6 +52,9 @@ function doGet(e) {
     return jsonOut(saveNumbers(p.username, rows));
   }
   if (action === "check") return jsonOut(checkNumber(p.phone, p.ck));
+  if (action === "register") return jsonOut(registerUser(p.username, p.password, p.ten));
+  if (action === "beginCheck") return jsonOut(beginCheck(p.username));
+  if (action === "updateLimits") return jsonOut(updateLimits(p.username, p.limit_list, p.limit_check));
   return jsonOut({ ok: true, msg: "running" });
 }
 
@@ -57,14 +63,27 @@ function jsonOut(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function padUser(row) {
+  const r = row.slice();
+  while (r.length < 7) r.push("");
+  if (r[3] === "" || r[3] == null) r[3] = 3;
+  if (r[4] === "" || r[4] == null) r[4] = 10;
+  if (r[5] === "" || r[5] == null) r[5] = 0;
+  if (r[6] == null) r[6] = "";
+  return r;
+}
+
 function login(username, password) {
   const ss = SpreadsheetApp.openById(SHEET_ID);
   const sh = ss.getSheetByName(USERS_SHEET);
   const rows = sh.getDataRange().getValues();
   for (let i = 1; i < rows.length; i++) {
-    if (String(rows[i][0]).trim() === String(username).trim() &&
-        String(rows[i][1]) === String(password)) {
-      return { ok: true, ten: rows[i][2] || username };
+    const r = padUser(rows[i]);
+    if (String(r[0]).trim() === String(username).trim() &&
+        String(r[1]) === String(password)) {
+      return { ok: true, ten: r[2] || username,
+        limit_list: r[3], limit_check: r[4],
+        checks_today: r[5], last_check_date: r[6] };
     }
   }
   return { ok: false };
@@ -158,6 +177,69 @@ function checkNumber(phone, ck) {
     } catch (e) {}
   }
   return { ok: true, available: false, bucket: bucket };
+}
+
+function registerUser(username, password, ten) {
+  username = String(username || "").trim();
+  password = String(password || "");
+  if (!username || !password) return { ok: false, error: "missing" };
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sh = ss.getSheetByName(USERS_SHEET);
+  const rows = sh.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === username) return { ok: false, error: "exists" };
+  }
+  sh.appendRow([username, password, ten || username, 3, 10, 0, ""]);
+  return { ok: true, ten: ten || username, limit_list: 3, limit_check: 10 };
+}
+
+function beginCheck(username) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sh = ss.getSheetByName(USERS_SHEET);
+  const rows = sh.getDataRange().getValues();
+  const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
+  for (let i = 1; i < rows.length; i++) {
+    const r = padUser(rows[i]);
+    if (String(r[0]).trim() === String(username).trim()) {
+      const limit = r[4];
+      const unlimited = String(limit).toLowerCase().indexOf("không") !== -1 || String(limit).toLowerCase() === "unlimited" || String(limit).toLowerCase() === "inf";
+      let checks = r[5] || 0;
+      let lastDate = r[6] || "";
+      if (lastDate !== today) { checks = 0; lastDate = today; }
+      if (!unlimited) {
+        const lim = parseInt(limit, 10);
+        if (!isNaN(lim) && checks >= lim) {
+          // save reset date
+          sh.getRange(i + 1, 6, 1, 2).setValues([[checks, lastDate]]);
+          return { ok: true, allowed: false, remaining: 0, limit: limit, checks_today: checks };
+        }
+        checks = checks + 1;
+      }
+      sh.getRange(i + 1, 6, 1, 2).setValues([[checks, lastDate]]);
+      return { ok: true, allowed: true, remaining: unlimited ? "không giới hạn" : (parseInt(limit,10) - checks), limit: limit, checks_today: checks };
+    }
+  }
+  return { ok: false, error: "user not found" };
+}
+
+function updateLimits(username, limit_list, limit_check) {
+  const ss = SpreadsheetApp.openById(SHEET_ID);
+  const sh = ss.getSheetByName(USERS_SHEET);
+  const rows = sh.getDataRange().getValues();
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0]).trim() === String(username).trim()) {
+      // limit_list
+      let ll = limit_list;
+      if (ll === "" || ll == null) ll = 3;
+      const llNum = parseInt(ll, 10);
+      if (!isNaN(llNum)) ll = llNum;
+      let lc = limit_check;
+      if (lc === "" || lc == null) lc = 10;
+      sh.getRange(i + 1, 4, 1, 2).setValues([[ll, lc]]);
+      return { ok: true, limit_list: ll, limit_check: lc };
+    }
+  }
+  return { ok: false, error: "user not found" };
 }
 ```<|end|><|start|>write to=assistant<|channel|>analysis<|message|>Now update README to reflect new features and setup. Let me update README.<|end|><|start|><|start|>assistant to=write<|channel|>analysis <|constrain|>xml<|message|><rfl:parameter name="path">
 /Users/ngotanthong/Dự án VibeCode/PrintList/README.md

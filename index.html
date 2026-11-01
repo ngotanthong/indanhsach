@@ -129,13 +129,15 @@
   <div id="lock">
     <form class="box" id="loginForm" autocomplete="off">
       <div class="ic">🔒</div>
-      <h2>Đăng nhập</h2>
-      <p class="sub">Nhập tài khoản để truy cập Tool</p>
+      <h2 id="authTitle">Đăng nhập</h2>
+      <p class="sub" id="authSub">Nhập tài khoản để truy cập Tool</p>
       <p style="font-size:11px;color:#6b7a8d;margin-top:-10px;margin-bottom:10px">Demo: ngotanthong / ngotanthong</p>
       <input type="text" id="loginUser" placeholder="Tên đăng nhập" autofocus>
       <input type="password" id="loginPass" placeholder="Mật khẩu">
+      <input type="text" id="regTen" placeholder="Tên hiển thị (đăng ký)" style="display:none">
       <button type="submit" id="loginBtn">Ok let's go</button>
       <div class="err" id="loginErr"></div>
+      <p style="margin-top:10px;font-size:12px"><a href="#" id="toggleAuth" style="color:#1a6fd4;font-weight:700;text-decoration:none">Chưa có tài khoản? Đăng ký</a></p>
     </form>
   </div>
 
@@ -196,6 +198,24 @@
           </div>
 
         <div style="margin-top:14px">
+          <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Giới hạn</h2>
+          <div class="manage-grid" style="grid-template-columns:1fr 1fr">
+            <div>
+              <label>Số lượng danh sách (mặc định 3)</label>
+              <input type="text" id="limitListInput" placeholder="3">
+            </div>
+            <div>
+              <label>Số lần check/ngày ("không giới hạn" = ∞)</label>
+              <input type="text" id="limitCheckInput" placeholder="10 hoặc không giới hạn">
+            </div>
+          </div>
+          <div class="manage-actions">
+            <button id="saveLimits" class="ghost">Lưu giới hạn</button>
+            <span class="count" id="limitsInfo"></span>
+          </div>
+        </div>
+
+        <div style="margin-top:14px">
           <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Xem trước poster (chỉ số còn)</h2>
           <div class="stage" style="container-type:inline-size">
             <div class="poster" id="posterM">
@@ -253,7 +273,7 @@
 // Dán URL Web App của Google Apps Script (deploy) vào đây. Để trống = chế độ demo (lưu trong trình duyệt).
 const API_URL = "https://script.google.com/macros/s/AKfycbwY1hZr42h-0rDr8NNsDPp0MuwnEEYNtfPtHDF5iwReA-pJ3i-kspNfbVVI5AInXZ3r7w/exec";
 let apiEnabled = !!API_URL;
-const DEMO_USERS = { "ngotanthong": { password: "ngotanthong", ten: "ngotanthong" } };
+const DEMO_USERS = { "ngotanthong": { password: "ngotanthong", ten: "ngotanthong", limit_list: 3, limit_check: "không giới hạn" } };
 
 const W = 1448, H = 1086;
 const ROW_Y = [489.5,533.5,579,624,669,714,760,806,851.5,898.5];
@@ -265,6 +285,8 @@ const BLOCKS = [
 let DATA = [];
 let currentUser = null;
 let currentTen = null;
+let registerMode = false;
+let userLimits = { list: 3, check: 10 };
 let manageRows = [];
 
 const $ = id => document.getElementById(id);
@@ -304,7 +326,11 @@ async function doLogin(username, password){
   if (apiEnabled){
     try {
       const data = await apiCall({ action: "login", username, password });
-      if (data && data.ok){ currentUser = username; currentTen = data.ten || username; return true; }
+      if (data && data.ok){
+        currentUser = username; currentTen = data.ten || username;
+        userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 };
+        return true;
+      }
       return false;
     } catch(e){
       doLogin._err = e.message;
@@ -312,14 +338,18 @@ async function doLogin(username, password){
       const u = getUsersLocal();
       if (u[username] && u[username].password === password){
         apiEnabled = false;
-        currentUser = username; currentTen = u[username].ten || username; return true;
+        currentUser = username; currentTen = u[username].ten || username;
+        userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
+        return true;
       }
       return false;
     }
   } else {
     const u = getUsersLocal();
     if (u[username] && u[username].password === password){
-      currentUser = username; currentTen = u[username].ten || username; return true;
+      currentUser = username; currentTen = u[username].ten || username;
+      userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
+      return true;
     }
     return false;
   }
@@ -493,7 +523,42 @@ async function loadManage(){
   renderManage();
   renderManagePoster();
   setStatus("Đã tải " + manageRows.length + " số");
+  // hien thi gioi han
+  const li = $("limitListInput");
+  const ci = $("limitCheckInput");
+  const info = $("limitsInfo");
+  if (li) li.value = userLimits.list;
+  if (ci) ci.value = userLimits.check;
+  if (info) info.textContent = "Hiện tại: " + manageRows.length + "/" + userLimits.list + " số";
 }
+
+$("saveLimits").addEventListener("click", async () => {
+  const ll = $("limitListInput").value.trim();
+  const lc = $("limitCheckInput").value.trim();
+  const newLL = ll === "" ? 3 : (isNaN(parseInt(ll,10)) ? ll : parseInt(ll,10));
+  const newLC = lc === "" ? 10 : lc;
+  if (apiEnabled){
+    try {
+      const data = await apiCall({ action: "updateLimits", username: currentUser, limit_list: newLL, limit_check: newLC });
+      if (data && data.ok){ userLimits = { list: data.limit_list, check: data.limit_check }; }
+      else { alert("Lưu giới hạn thất bại"); return; }
+    } catch(e){ alert("Lỗi: " + e.message); return; }
+  } else {
+    // demo: save to local user
+    const u = getUsersLocal();
+    if (u[currentUser]){
+      u[currentUser].limit_list = newLL;
+      u[currentUser].limit_check = newLC;
+      saveUsersLocal(u);
+      userLimits = { list: newLL, check: newLC };
+    }
+  }
+  $("limitListInput").value = userLimits.list;
+  $("limitCheckInput").value = userLimits.check;
+  const info = $("limitsInfo");
+  if (info) info.textContent = "Đã lưu. Hiện tại: " + manageRows.length + "/" + userLimits.list + " số";
+  setStatus("Đã lưu giới hạn");
+});
 
 function isAvailableStatus(v){
   const s = String(v||"").toLowerCase();
@@ -599,6 +664,12 @@ $("manageAdd").addEventListener("click", () => {
   const ckGoc = normCK($("mCkGoc").value.trim());
   const ckMoi = normCK($("mCkMoi").value.trim());
   if (!sdt) return;
+  const limitList = (userLimits && userLimits.list) ? userLimits.list : 3;
+  if (manageRows.length >= limitList){
+    setStatus("Đã đạt giới hạn " + limitList + " số trong danh sách");
+    alert("Đã đạt giới hạn " + limitList + " số. Không thể thêm nữa.");
+    return;
+  }
   manageRows.push([sdt, ckGoc, ckMoi, ""]);
   $("mSdt").value = ""; $("mCkGoc").value = ""; $("mCkMoi").value = "";
   renderManage();
@@ -610,7 +681,12 @@ $("manageAdd").addEventListener("click", () => {
 $("manageImport").addEventListener("click", () => {
   const rows = parseList($("mBulk").value);
   if (!rows.length) { setStatus("Không có dữ liệu hợp lệ"); return; }
-  manageRows = manageRows.concat(rows);
+  const limitList = (userLimits && userLimits.list) ? userLimits.list : 3;
+  const space = Math.max(0, limitList - manageRows.length);
+  if (space <= 0){ setStatus("Đã đạt giới hạn " + limitList + " số"); alert("Đã đạt giới hạn " + limitList + " số."); return; }
+  const toAdd = rows.slice(0, space);
+  if (toAdd.length < rows.length) alert("Chỉ thêm được " + space + " số do giới hạn " + limitList + " số.");
+  manageRows = manageRows.concat(toAdd);
   $("mBulk").value = "";
   renderManage();
   renderManagePoster();
@@ -647,6 +723,14 @@ $("syncAvailable").addEventListener("click", () => {
 async function checkAllStatus(){
   if (!apiEnabled) { setStatus("Đang ở chế độ demo (không kết nối được GAS)"); return; }
   if (!manageRows.length) { setStatus("Không có số để kiểm tra"); return; }
+  // kiem tra gioi han check theo ngay
+  try {
+    const bc = await apiCall({ action: "beginCheck", username: currentUser });
+    if (bc && bc.ok && bc.allowed === false){
+      setStatus("Đã đạt giới hạn check hôm nay (" + bc.checks_today + "/" + bc.limit + ")");
+      return;
+    }
+  } catch(e){}
   const bar = $("checkProgress");
   const barFill = $("checkProgressBar");
   if (bar) bar.style.display = "block";
@@ -707,14 +791,47 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "visible") syncFromSheet();
 });
 
-/* ---- login ---- */
+/* ---- chuyen dang nhap / dang ky ---- */
+$("toggleAuth").addEventListener("click", e => {
+  e.preventDefault();
+  registerMode = !registerMode;
+  $("authTitle").textContent = registerMode ? "Đăng ký" : "Đăng nhập";
+  $("authSub").textContent = registerMode ? "Tạo tài khoản mới" : "Nhập tài khoản để truy cập Tool";
+  $("loginBtn").textContent = registerMode ? "Đăng ký" : "Ok let's go";
+  $("regTen").style.display = registerMode ? "block" : "none";
+  $("toggleAuth").textContent = registerMode ? "Đã có tài khoản? Đăng nhập" : "Chưa có tài khoản? Đăng ký";
+  $("loginErr").textContent = "";
+});
+
+/* ---- login / register ---- */
 $("loginForm").addEventListener("submit", async e => {
   e.preventDefault();
   const u = $("loginUser").value.trim();
   const p = $("loginPass").value;
   const btn = $("loginBtn");
   btn.disabled = true;
-  const ok = await doLogin(u, p);
+  let ok = false;
+  if (registerMode){
+    const ten = $("regTen").value.trim() || u;
+    if (apiEnabled){
+      try {
+        const data = await apiCall({ action: "register", username: u, password: p, ten: ten });
+        if (data && data.ok){ ok = true; currentUser = u; currentTen = data.ten || ten; userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 }; }
+        else { doLogin._err = data && data.error === "exists" ? "Tài khoản đã tồn tại" : "Đăng ký thất bại"; }
+      } catch(e){ doLogin._err = e.message; }
+    } else {
+      // demo mode register
+      const users = getUsersLocal();
+      if (users[u]){ doLogin._err = "Tài khoản đã tồn tại"; }
+      else {
+        users[u] = { password: p, ten: ten, limit_list: 3, limit_check: 10 };
+        saveUsersLocal(users);
+        currentUser = u; currentTen = ten; userLimits = { list: 3, check: 10 }; ok = true;
+      }
+    }
+  } else {
+    ok = await doLogin(u, p);
+  }
   btn.disabled = false;
   if (ok){
     document.body.classList.add("open");
