@@ -180,6 +180,9 @@
         <div id="checkProgress" style="display:none;margin-top:6px;height:8px;background:#e8effa;border-radius:4px;overflow:hidden">
           <div id="checkProgressBar" style="height:100%;width:0%;background:#1a6fd4;transition:width .2s"></div>
         </div>
+        <div style="margin-top:6px">
+          <button id="lastCheckBtn" class="ghost" style="flex:0 0 auto;min-width:0;padding:4px 10px;font-size:12px">Lần check cuối: chưa có</button>
+        </div>
         <table class="mtable">
           <thead><tr><th style="width:40px">STT</th><th>Số thuê bao</th><th>CK gốc</th><th>CK mới</th><th>Trạng thái</th><th style="width:70px">Xóa</th></tr></thead>
           <tbody id="manageTbody"></tbody>
@@ -671,11 +674,16 @@ async function checkAllStatus(){
   renderManage();
   syncAvailableToCreate();
   setStatus("Đã kiểm tra " + done + " số");
+  const lastBtn = $("lastCheckBtn");
+  if (lastBtn) lastBtn.textContent = "Lần check cuối: " + new Date().toLocaleTimeString("vi-VN");
   if (bar) setTimeout(() => { bar.style.display = "none"; }, 1200);
 }
 // tu dong check khi vao web + dinh ky 15 phut
 let checkTimer = null;
 let syncTimer = null;
+// nút hiển thị thời gian check cuối, bấm để check lại
+const _lastCheckBtn = $("lastCheckBtn");
+if (_lastCheckBtn) _lastCheckBtn.addEventListener("click", () => checkAllStatus());
 async function syncFromSheet(){
   if (!apiEnabled) return;
   try {
