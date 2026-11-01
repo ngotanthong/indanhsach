@@ -61,6 +61,26 @@ function jsonOut(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
+function normDate(s) {
+  s = String(s || "").trim();
+  if (!s) return "";
+  // yyyy-MM-dd
+  let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+  if (m) {
+    const y = m[1], mo = ("0" + m[2]).slice(-2), d = ("0" + m[3]).slice(-2);
+    if (mo >= "01" && mo <= "12" && d >= "01" && d <= "31") return y + "-" + mo + "-" + d;
+    return "";
+  }
+  // dd-MM-yyyy or dd/MM/yyyy
+  m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+  if (m) {
+    const d = ("0" + m[1]).slice(-2), mo = ("0" + m[2]).slice(-2), y = m[3];
+    if (mo >= "01" && mo <= "12" && d >= "01" && d <= "31") return y + "-" + mo + "-" + d;
+    return "";
+  }
+  return "";
+}
+
 function padUser(row) {
   const r = row.slice();
   while (r.length < 8) r.push("");
@@ -80,15 +100,19 @@ function login(username, password) {
     const r = padUser(rows[i]);
     if (String(r[0]).trim() === String(username).trim() &&
         String(r[1]) === String(password)) {
-      // kiem tra han su dung
-      const exp = String(r[7] || "").trim();
+      // kiem tra han su dung (ho tro nhieu dinh dang, chuan hoa ve yyyy-MM-dd)
+      const expRaw = String(r[7] || "").trim();
+      const exp = normDate(expRaw);
+      if (expRaw && !exp) {
+        // ngay khong hop le -> bo qua (coi nhu khong han)
+      }
       if (exp) {
         const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
         if (today > exp) return { ok: false, error: "expired", expiry: exp };
       }
       return { ok: true, ten: r[2] || username,
         limit_list: r[3], limit_check: r[4],
-        checks_today: r[5], last_check_date: r[6], expiry: r[7] };
+        checks_today: r[5], last_check_date: r[6], expiry: exp || expRaw };
     }
   }
   return { ok: false };
