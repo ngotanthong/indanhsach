@@ -323,14 +323,16 @@ async function doLogin(username, password){
 }
 
 async function loadNumbers(){
+  let rows = [];
   if (apiEnabled){
     try {
       const data = await apiCall({ action: "list", username: currentUser });
-      return (data && data.rows) ? data.rows : [];
-    } catch(e){ return []; }
+      rows = (data && data.rows) ? data.rows : [];
+    } catch(e){ rows = []; }
   } else {
-    try { return JSON.parse(localStorage.getItem(manageKey(currentUser)) || "[]"); } catch(e){ return []; }
+    try { rows = JSON.parse(localStorage.getItem(manageKey(currentUser)) || "[]"); } catch(e){ rows = []; }
   }
+  return rows.map(r => [r[0], normCK(r[1]), normCK(r[2]), r[3]]);
 }
 
 async function saveNumbers(rows){
@@ -364,8 +366,8 @@ function parseList(text){
     if (parts.length >= 3 && /^\d{1,3}$/.test(parts[0])) parts = parts.slice(1);
 
     const sdt = parts[0];
-    const ckGoc = parts.length > 1 ? parts[1] : "";
-    const ckMoi = parts.length > 2 ? parts[2] : "";
+    const ckGoc = normCK(parts.length > 1 ? parts[1] : "");
+    const ckMoi = normCK(parts.length > 2 ? parts[2] : "");
     const trangThai = parts.length > 3 ? parts[3] : "";
     if (sdt.replace(/\D/g, "").length < 9) continue;
     out.push([sdt, ckGoc, ckMoi, trangThai]);
@@ -388,6 +390,22 @@ function looksMoney(t){
 }
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+function normCK(v){
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return "";
+  if (/[kK]$/.test(s) || /[tT][rR]$/.test(s)) return s;
+  const num = parseFloat(s.replace(/\./g, "").replace(/,/g, "."));
+  if (isNaN(num)) return s;
+  if (num >= 1000000){
+    const tr = num / 1000000;
+    return (Math.round(tr * 10) / 10).toString().replace(/\.0$/, "") + "tr";
+  }
+  if (num >= 1000){
+    const k = num / 1000;
+    return (Math.round(k * 10) / 10).toString().replace(/\.0$/, "") + "k";
+  }
+  return s;
+}
 function statusStyle(v){
   const s = String(v||"").toLowerCase();
   if (s.includes("còn") || s === "con" || s.includes("available")) {
@@ -575,8 +593,8 @@ document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () =>
 /* ---- manage events ---- */
 $("manageAdd").addEventListener("click", () => {
   const sdt = $("mSdt").value.trim();
-  const ckGoc = $("mCkGoc").value.trim();
-  const ckMoi = $("mCkMoi").value.trim();
+  const ckGoc = normCK($("mCkGoc").value.trim());
+  const ckMoi = normCK($("mCkMoi").value.trim());
   if (!sdt) return;
   manageRows.push([sdt, ckGoc, ckMoi, ""]);
   $("mSdt").value = ""; $("mCkGoc").value = ""; $("mCkMoi").value = "";
