@@ -9,7 +9,7 @@ Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp Vi
 - Hiển thị tên user ở góc trên bên phải sau khi đăng nhập.
 - Hai tab: **Quản lý số** (thêm/sửa/xóa list số, kiểm tra trạng thái tự động qua VNPT API) và **Nhập số để tạo bảng** (tạo poster).
 - User demo: `ngotanthong` / `ngotanthong`.
-- Bỏ quản lý user theo ngày hết hạn.
+- Quản lý **hạn sử dụng tài khoản** trong Sheet (`expiry_date`): quá hạn sẽ không đăng nhập/không check được.
 
 ## Cách dùng nhanh nhất — `index.html`
 1. Mở `index.html` bằng Chrome.
@@ -37,7 +37,8 @@ Mặc định `API_URL = ""` trong `index.html`: dữ liệu lưu trong trình d
 > ⚠️ Nếu để "Anyone with Google account", request từ web bị chuyển hướng tới trang đăng nhập Google (HTTP 302) → auto-check và đăng nhập Sheet không hoạt động, tool tự về chế độ demo.
 
 ### Cấu trúc Google Sheet
-- Sheet `Users`: A = username, B = password, C = tên, D = limit_list, E = limit_check, F = checks_today, G = last_check_date, H = expiry_date. (Giới hạn chỉnh trực tiếp trong sheet.)
+- Sheet `Users`: A = username, B = password, C = tên, D = limit_list, E = limit_check, F = checks_today, G = last_check_date, H = expiry_date. (Giới hạn & hạn dùng chỉnh trực tiếp trong sheet.)
+  - `expiry_date` nhận mọi định dạng: ô Date của Sheet, `21/10/2026`, `2026-10-21`, hoặc chuỗi `Sat Oct 31 2026...`. Để **trống = không hết hạn**. Quá ngày này → tài khoản bị khóa (không đăng nhập được, không check được).
 - Sheet `Numbers`: cột A = username, B = số thuê bao, C = cam kết gốc, D = cam kết mới, E = trạng thái.
 
 ## Các file trong repo

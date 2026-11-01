@@ -311,13 +311,19 @@ async function doLogin(username, password){
     try {
       const data = await apiCall({ action: "login", username, password });
       if (data && data.ok){
+        // chan hạn sử dụng ngay cả khi GAS cũ trả về chuỗi ngày chưa chuẩn
+        const exp = data.expiry || "";
+        if (isExpired(exp)){
+          doLogin._err = "Tài khoản đã hết hạn (" + fmtDMY(exp) + ")";
+          return false;
+        }
         currentUser = username; currentTen = data.ten || username;
         userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 };
-        userExpiry = data.expiry || "";
+        userExpiry = parseDateISO(exp) || exp;
         return true;
       }
       if (data && data.error === "expired"){
-        doLogin._err = "Tài khoản đã hết hạn (" + (data.expiry || "") + ")";
+        doLogin._err = "Tài khoản đã hết hạn (" + fmtDMY(data.expiry || "") + ")";
         return false;
       }
       return false;
@@ -327,14 +333,14 @@ async function doLogin(username, password){
       const u = getUsersLocal();
       if (u[username] && u[username].password === password){
         const exp = u[username].expiry || "";
-        if (exp){
-          const today = new Date().toISOString().slice(0,10);
-          if (today > exp){ doLogin._err = "Tài khoản đã hết hạn (" + exp + ")"; return false; }
+        if (isExpired(exp)){
+          doLogin._err = "Tài khoản đã hết hạn (" + fmtDMY(exp) + ")";
+          return false;
         }
         apiEnabled = false;
         currentUser = username; currentTen = u[username].ten || username;
         userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
-        userExpiry = exp;
+        userExpiry = parseDateISO(exp) || exp;
         return true;
       }
       return false;
@@ -343,13 +349,13 @@ async function doLogin(username, password){
     const u = getUsersLocal();
     if (u[username] && u[username].password === password){
       const exp = u[username].expiry || "";
-      if (exp){
-        const today = new Date().toISOString().slice(0,10);
-        if (today > exp){ doLogin._err = "Tài khoản đã hết hạn (" + exp + ")"; return false; }
+      if (isExpired(exp)){
+        doLogin._err = "Tài khoản đã hết hạn (" + fmtDMY(exp) + ")";
+        return false;
       }
       currentUser = username; currentTen = u[username].ten || username;
       userLimits = { list: (u[username].limit_list || 3), check: (u[username].limit_check || 10) };
-      userExpiry = exp;
+      userExpiry = parseDateISO(exp) || exp;
       return true;
     }
     return false;
@@ -424,10 +430,50 @@ function looksMoney(t){
 }
 
 function esc(s){ return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
-function fmtDMY(iso){
-  const m = String(iso||"").match(/^(\d{4})-(\d{2})-(\d{2})$/);
-  if (!m) return iso || "";
-  return m[3] + "/" + m[2] + "/" + m[1];
+
+/* Chuan hoa ngay ve yyyy-MM-dd; ho tro Date object, dd/MM/yyyy, yyyy-MM-dd, "Sat Oct 31 2026..." */
+const MONTHS_EN = { jan:"01", feb:"02", mar:"03", apr:"04", may:"05", jun:"06", jul:"07", aug:"08", sep:"09", oct:"10", nov:"11", dec:"12" };
+function validYMD(y, mo, d){
+  y = parseInt(y,10); mo = parseInt(mo,10); d = parseInt(d,10);
+  if (!y || !mo || !d || mo < 1 || mo > 12 || d < 1 || d > 31) return "";
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== mo - 1 || dt.getDate() !== d) return "";
+  return y + "-" + ("0"+mo).slice(-2) + "-" + ("0"+d).slice(-2);
+}
+function parseDateISO(v){
+  if (v instanceof Date){ if (isNaN(v.getTime())) return ""; return validYMD(v.getFullYear(), v.getMonth()+1, v.getDate()); }
+  const s = String(v == null ? "" : v).trim();
+  if (!s) return "";
+  // yyyy-MM-dd (kem gio cung duoc)
+  let m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  if (m) return validYMD(m[1], m[2], m[3]);
+  // dd/MM/yyyy
+  m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+  if (m) return validYMD(m[3], m[2], m[1]);
+  // "Sat Oct 31 2026 00:00:00 GMT+0700 (...)"
+  m = s.match(/^[A-Za-z]{3},?\s+(?:(\d{1,2})\s+)?([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})/);
+  if (m && MONTHS_EN[String(m[2]).toLowerCase()]) return validYMD(m[4], MONTHS_EN[m[2].toLowerCase()], m[1] || m[3]);
+  // "Sat, 31 Oct 2026 ..."
+  m = s.match(/^[A-Za-z]{3},?\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
+  if (m && MONTHS_EN[String(m[2]).toLowerCase()]) return validYMD(m[3], MONTHS_EN[m[2].toLowerCase()], m[1]);
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return validYMD(d.getFullYear(), d.getMonth()+1, d.getDate());
+  return "";
+}
+function todayISO(){
+  const d = new Date();
+  return validYMD(d.getFullYear(), d.getMonth()+1, d.getDate());
+}
+function isExpired(exp){
+  const iso = parseDateISO(exp);
+  if (!iso) return false;
+  return todayISO() > iso;
+}
+function fmtDMY(v){
+  const iso = parseDateISO(v);
+  if (!iso) return String(v || "");
+  const p = iso.split("-");
+  return p[2] + "/" + p[1] + "/" + p[0];
 }
 function normCK(v){
   const s = String(v == null ? "" : v).trim();
@@ -700,6 +746,10 @@ async function checkAllStatus(){
   // kiem tra gioi han check theo ngay
   try {
     const bc = await apiCall({ action: "beginCheck", username: currentUser });
+    if (bc && bc.ok === false && bc.error === "expired"){
+      setStatus("Tài khoản đã hết hạn (" + fmtDMY(bc.expiry) + ")");
+      return;
+    }
     if (bc && bc.ok && bc.allowed === false){
       setStatus("Đã đạt giới hạn check hôm nay (" + bc.checks_today + "/" + bc.limit + ")");
       return;
@@ -793,7 +843,7 @@ $("loginForm").addEventListener("submit", async e => {
     if (apiEnabled){
       try {
         const data = await apiCall({ action: "register", username: u, password: p, ten: ten });
-        if (data && data.ok){ ok = true; currentUser = u; currentTen = data.ten || ten; userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 }; userExpiry = data.expiry || ""; }
+        if (data && data.ok){ ok = true; currentUser = u; currentTen = data.ten || ten; userLimits = { list: data.limit_list || 3, check: data.limit_check || 10 }; userExpiry = parseDateISO(data.expiry) || ""; }
         else { doLogin._err = data && data.error === "exists" ? "Tài khoản đã tồn tại" : "Đăng ký thất bại"; }
       } catch(e){ doLogin._err = e.message; }
     } else {
@@ -824,7 +874,7 @@ $("loginForm").addEventListener("submit", async e => {
     if (r && !$("inp").value) { $("restore").classList.add("show"); }
     setTimeout(() => $("inp").focus(), 50);
   } else {
-    $("loginErr").textContent = doLogin._err ? ("Lỗi kết nối GAS: " + doLogin._err) : "Sai tên đăng nhập hoặc mật khẩu";
+    $("loginErr").textContent = doLogin._err ? doLogin._err : "Sai tên đăng nhập hoặc mật khẩu";
     $("loginPass").value = "";
     const b = document.querySelector("#lock .box");
     b.classList.remove("shake"); void b.offsetWidth; b.classList.add("shake");

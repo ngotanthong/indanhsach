@@ -61,24 +61,60 @@ function jsonOut(obj) {
     .setMimeType(ContentService.MimeType.JSON);
 }
 
-function normDate(s) {
-  s = String(s || "").trim();
+const MONTHS = {
+  jan: "01", feb: "02", mar: "03", apr: "04", may: "05", jun: "06",
+  jul: "07", aug: "08", sep: "09", oct: "10", nov: "11", dec: "12"
+};
+
+// Kiem tra ngay co ton tai that (vd: 31/02 la sai)
+function validYMD(y, mo, d) {
+  y = parseInt(y, 10); mo = parseInt(mo, 10); d = parseInt(d, 10);
+  if (!y || !mo || !d) return "";
+  if (mo < 1 || mo > 12 || d < 1 || d > 31) return "";
+  const dt = new Date(y, mo - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== (mo - 1) || dt.getDate() !== d) return "";
+  return y + "-" + ("0" + mo).slice(-2) + "-" + ("0" + d).slice(-2);
+}
+
+// Chuan hoa moi dinh dang ngay ve yyyy-MM-dd (ho tro ca Date object)
+function normDate(v) {
+  if (v instanceof Date) {
+    if (isNaN(v.getTime())) return "";
+    return Utilities.formatDate(v, Session.getScriptTimeZone(), "yyyy-MM-dd");
+  }
+  let s = String(v == null ? "" : v).trim();
   if (!s) return "";
-  // yyyy-MM-dd
-  let m = s.match(/^(\d{4})[-\/](\d{1,2})[-\/](\d{1,2})$/);
+
+  // "Sat Oct 31 2026 00:00:00 GMT+0700 (Gio Dong Duong)" (Date.toString cua JS)
+  let m = s.match(/^[A-Za-z]{3}\s+([A-Za-z]{3})\s+(\d{1,2}),?\s+(\d{4})/);
   if (m) {
-    const y = m[1], mo = ("0" + m[2]).slice(-2), d = ("0" + m[3]).slice(-2);
-    if (mo >= "01" && mo <= "12" && d >= "01" && d <= "31") return y + "-" + mo + "-" + d;
-    return "";
+    const mon = MONTHS[String(m[1]).toLowerCase()];
+    if (mon) return validYMD(m[3], mon, m[2]);
   }
-  // dd-MM-yyyy or dd/MM/yyyy
-  m = s.match(/^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/);
+  // "Sat, 31 Oct 2026 ..." (kieu RFC)
+  m = s.match(/^[A-Za-z]{3},?\s+(\d{1,2})\s+([A-Za-z]{3})\s+(\d{4})/);
   if (m) {
-    const d = ("0" + m[1]).slice(-2), mo = ("0" + m[2]).slice(-2), y = m[3];
-    if (mo >= "01" && mo <= "12" && d >= "01" && d <= "31") return y + "-" + mo + "-" + d;
-    return "";
+    const mon = MONTHS[String(m[2]).toLowerCase()];
+    if (mon) return validYMD(m[3], mon, m[1]);
   }
+  // yyyy-MM-dd / yyyy/MM/dd / yyyy.MM.dd
+  m = s.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/);
+  if (m) return validYMD(m[1], m[2], m[3]);
+  // dd-MM-yyyy / dd/MM/yyyy / dd.MM.yyyy
+  m = s.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/);
+  if (m) return validYMD(m[3], m[2], m[1]);
+
+  // Fallback: de JS tu parse (vd chuoi ISO 2026-10-31T00:00:00.000Z)
+  const d = new Date(s);
+  if (!isNaN(d.getTime())) return Utilities.formatDate(d, Session.getScriptTimeZone(), "yyyy-MM-dd");
   return "";
+}
+
+function toDMY(iso) {
+  const s = String(iso || "");
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return s;
+  return m[3] + "/" + m[2] + "/" + m[1];
 }
 
 function padUser(row) {
@@ -100,22 +136,16 @@ function login(username, password) {
     const r = padUser(rows[i]);
     if (String(r[0]).trim() === String(username).trim() &&
         String(r[1]) === String(password)) {
-      // kiem tra han su dung (ho tro nhieu dinh dang, chuan hoa ve yyyy-MM-dd)
-      // ho tro ca o Date cua Sheet
-      let expRaw = r[7];
-      if (expRaw instanceof Date) expRaw = Utilities.formatDate(expRaw, Session.getScriptTimeZone(), "dd/MM/yyyy");
-      expRaw = String(expRaw || "").trim();
-      const exp = normDate(expRaw);
-      if (expRaw && !exp) {
-        // ngay khong hop le -> bo qua (coi nhu khong han)
-      }
+      // kiem tra han su dung (Date object, dd/MM/yyyy, Sat Oct 31 2026..., ...)
+      const exp = normDate(r[7]);
       if (exp) {
         const today = Utilities.formatDate(new Date(), Session.getScriptTimeZone(), "yyyy-MM-dd");
-        if (today > exp) return { ok: false, error: "expired", expiry: exp };
+        if (today > exp) return { ok: false, error: "expired", expiry: toDMY(exp), expiry_iso: exp };
       }
       return { ok: true, ten: r[2] || username,
         limit_list: r[3], limit_check: r[4],
-        checks_today: r[5], last_check_date: r[6], expiry: exp || expRaw };
+        checks_today: r[5], last_check_date: r[6],
+        expiry: toDMY(exp), expiry_iso: exp };
     }
   }
   return { ok: false };
@@ -223,7 +253,7 @@ function registerUser(username, password, ten) {
   }
   const exp = Utilities.formatDate(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), Session.getScriptTimeZone(), "yyyy-MM-dd");
   sh.appendRow([username, password, ten || username, 3, 10, 0, "", exp]);
-  return { ok: true, ten: ten || username, limit_list: 3, limit_check: 10, expiry: exp };
+  return { ok: true, ten: ten || username, limit_list: 3, limit_check: 10, expiry: toDMY(exp), expiry_iso: exp };
 }
 
 function beginCheck(username) {
@@ -234,6 +264,8 @@ function beginCheck(username) {
   for (let i = 1; i < rows.length; i++) {
     const r = padUser(rows[i]);
     if (String(r[0]).trim() === String(username).trim()) {
+      const exp = normDate(r[7]);
+      if (exp && today > exp) return { ok: false, error: "expired", expiry: toDMY(exp), expiry_iso: exp };
       const limit = r[4];
       const unlimited = String(limit).toLowerCase().indexOf("không") !== -1 || String(limit).toLowerCase() === "unlimited" || String(limit).toLowerCase() === "inf";
       let checks = r[5] || 0;
@@ -254,7 +286,3 @@ function beginCheck(username) {
   }
   return { ok: false, error: "user not found" };
 }
-
-
-```<|end|><|start|>write to=assistant<|channel|>analysis<|message|>Now update README to reflect new features and setup. Let me update README.<|end|><|start|><|start|>assistant to=write<|channel|>analysis <|constrain|>xml<|message|><rfl:parameter name="path">
-/Users/ngotanthong/Dự án VibeCode/PrintList/README.md
