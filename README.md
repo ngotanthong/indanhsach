@@ -24,7 +24,7 @@ Mặc định `API_URL = ""` trong `index.html`: dữ liệu lưu trong trình d
 ### Kết nối Google Sheet (lưu thật)
 1. Mở Google Sheet: https://docs.google.com/spreadsheets/d/16X92ss43OtOJTK9IqhjnzEnesgvWuawdha63_ogNzvw
 2. Extensions → Apps Script, dán nội dung file `gas_backend.gs`, lưu.
-3. Chạy hàm `setup()` một lần (tạo sheet "Users", "Numbers" + user demo).
+3. Chạy hàm `setup()` một lần (tạo sheet "Users", "Numbers" + user demo). ⚠️ `setup()` sẽ **xóa** dữ liệu cũ. Nếu đã có dữ liệu, không chạy lại; chỉ thêm cột H `expiry_date` thủ công vào sheet `Users`.
 4. **Deploy → New deployment → Web app**:
    - Execute as: **Me**
    - Who has access: **Anyone** (⚠️ phải là "Anyone", KHÔNG phải "Anyone with Google account")
