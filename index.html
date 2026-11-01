@@ -185,6 +185,7 @@
   .mcard label input{font-size:14px}
   .mcard-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
   .mcard .mcard-del{padding:4px 10px;font-size:12px}
+  .mcard input{width:100%}
   table.mtable{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;min-width:620px}
   table.mtable th,table.mtable td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left}
   table.mtable th{background:#f9fafb;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
@@ -474,9 +475,9 @@ async function apiCall(payload){
 function updateModeBadge(){
   const b = $("modeBadge");
   if (!b) return;
-  if (!apiEnabled){ b.textContent = "Chế độ demo"; b.className = "mode-badge demo"; }
-  else if (apiOnline){ b.textContent = "✓ Google Sheet"; b.className = "mode-badge online"; }
-  else { b.textContent = "Chưa kết nối Sheet"; b.className = "mode-badge off"; }
+  if (!apiEnabled){ b.textContent = "Chế độ demo"; b.className = "mode-badge demo"; b.style.display = ""; }
+  else if (apiOnline){ b.textContent = "✓ Google Sheet"; b.className = "mode-badge online"; b.style.display = "none"; }
+  else { b.textContent = "Chưa kết nối Sheet"; b.className = "mode-badge off"; b.style.display = ""; }
 }
 
 async function doLogin(username, password){
@@ -1132,13 +1133,13 @@ function applyProfileData(data){
   updateStats();
 }
 
-// hien thi HSD gan ten user o topbar
+// hien thi HSD gan ten user o topbar (tom gon: chi con "Con N ngay")
 function updateHsdBadge(){
   const b = $("hsdBadge");
   if (!b) return;
   if (!userExpiry){ b.textContent = ""; b.className = "hsd-badge"; return; }
   const d = daysLeft(userExpiry);
-  b.textContent = fmtDMY(userExpiry) + (d !== null ? " (còn " + Math.max(0, d) + " ngày)" : "");
+  b.textContent = "Còn " + Math.max(0, d) + " ngày";
   b.className = "hsd-badge" + (d === null ? "" : (d < 0 ? " danger" : (d <= 3 ? " warn" : "")));
 }
 
