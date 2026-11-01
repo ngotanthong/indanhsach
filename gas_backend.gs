@@ -274,7 +274,6 @@ function checkNumber(phone, ck) {
   const digits = String(phone || "").replace(/\D/g, "");
   if (digits.length < 9) return { ok: false, error: "invalid phone" };
 
-  // prefix = 84 + 2 so sau so 0
   let prefix = "";
   if (digits.startsWith("0")) prefix = "84" + digits.substring(1, 3);
   else if (digits.startsWith("84")) prefix = digits.substring(0, 4);
@@ -282,57 +281,58 @@ function checkNumber(phone, ck) {
 
   const search = digits.slice(-7);
   const bucket = commitBucket(ck);
-  const bucketsToTry = [0];
-  if (bucket !== 0 && bucketsToTry.indexOf(bucket) === -1) bucketsToTry.push(bucket);
-
   const target = digits.startsWith("0") ? ("84" + digits.substring(1)) : digits;
 
-  // Thu lai nhieu lan de tranh ket qua sai do mang/API chay khong on dinh
-  const MAX_ATTEMPTS = 3;
+  // Danh sach bucket commit chuan cua VNPT
+  const ALL_BUCKETS = [100000, 150000, 200000, 400000, 600000, 800000];
+  // Thu bucket dung truoc (neu co), sau do thu tat ca cac bucket con lai de dam bao chinh xac
+  let bucketsToTry = [];
+  if (bucket && ALL_BUCKETS.indexOf(bucket) !== -1) bucketsToTry.push(bucket);
+  ALL_BUCKETS.forEach(function (b) { if (bucketsToTry.indexOf(b) === -1) bucketsToTry.push(b); });
+
+  // 2 vong thu de tranh ket qua sai tam thoi cua API
+  const PASSES = 2;
   let hadError = false;
   let sawAvailable = false;
-  let cleanNotFoundAttempts = 0;
+  let cleanNotFoundPasses = 0;
 
-  for (let attempt = 0; attempt < MAX_ATTEMPTS; attempt++) {
-    let attemptFound = false;
-    let attemptCleanNotFound = false;
-    let attemptError = false;
+  for (let pass = 0; pass < PASSES; pass++) {
+    let passFound = false;
+    let passClean = true;
+    let passHadError = false;
 
-    for (let b = 0; b < bucketsToTry.length; b++) {
-      const commit = bucketsToTry[b];
+    for (let i = 0; i < bucketsToTry.length; i++) {
+      const commit = bucketsToTry[i];
       const url = "https://digishop.vnpt.vn/apiprod/v2/simso/num_search?search=" +
         encodeURIComponent(search) + "&prefix=" + encodeURIComponent(prefix) +
         "&commit=" + commit + "&_t=" + Date.now();
       try {
         const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
         const code = resp.getResponseCode();
-        if (code < 200 || code >= 300) { attemptError = true; continue; }
+        if (code < 200 || code >= 300) { passHadError = true; passClean = false; continue; }
         const json = JSON.parse(resp.getContentText());
         const data = (json && json.data) ? json.data : [];
         const found = Array.isArray(data) && data.some(function (d) {
           return String(d.so_tb || "").replace(/\s/g, "") === target;
         });
-        if (found) { attemptFound = true; break; }
-        // not found on this bucket; continue trying other buckets
+        if (found) { passFound = true; break; }
       } catch (e) {
-        attemptError = true;
+        passHadError = true; passClean = false;
       }
+      Utilities.sleep(120);
     }
 
-    if (attemptFound) { sawAvailable = true; break; }
-    if (attemptError) { hadError = true; }
-    else { attemptCleanNotFound = true; cleanNotFoundAttempts++; }
+    if (passFound) { sawAvailable = true; break; }
+    if (passHadError) hadError = true;
+    if (passClean) cleanNotFoundPasses++;
 
-    if (attempt < MAX_ATTEMPTS - 1) Utilities.sleep(400);
+    if (pass < PASSES - 1) Utilities.sleep(500);
   }
 
-  // Chi ket luan "Het" khi it nhat 2 lan thu sach (khong loi) khong tim thay
   if (sawAvailable) return { ok: true, available: true, bucket: bucket };
-  if (cleanNotFoundAttempts >= 2) return { ok: true, available: false, bucket: bucket };
+  if (cleanNotFoundPasses >= 1) return { ok: true, available: false, bucket: bucket };
   if (hadError) return { ok: false, error: "network" };
-  // Truong hop chi 1 lan sach khong tim thay va khong loi -> van bao Het (hiem)
-  if (cleanNotFoundAttempts >= 1) return { ok: true, available: false, bucket: bucket };
-  return { ok: false, error: "network" };
+  return { ok: true, available: false, bucket: bucket };
 }
 
 function pad2(n) { return ("0" + n).slice(-2); }
