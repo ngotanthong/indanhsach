@@ -830,6 +830,7 @@ function renderManage(){
   if (cards) cards.innerHTML = "";
   if (isMobileView() && cards){
     manageRows.forEach((r, i) => cards.appendChild(buildManageCard(r, i)));
+    bindManageInputs();
   } else if (tb) {
     manageRows.forEach((r, i) => {
       const tr = document.createElement("tr");
