@@ -189,38 +189,42 @@
   .add-pane[hidden]{display:none}
   .bulk-label{font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:6px}
   .bulk-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-  /* ---- danh sách số: card 2 dòng (nhãn + input), tập trung vào số & trạng thái ---- */
-  .manage-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px;margin-top:10px}
-  .mcard{display:grid;grid-template-columns:14px minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr) 22px;
-         column-gap:8px;row-gap:5px;align-items:center;background:#fff;
-         border:1px solid var(--border);border-left:3px solid #c7d4e4;border-radius:12px;
-         padding:10px 12px;min-width:0;box-shadow:var(--shadow);
-         transition:border-color .15s,box-shadow .15s}
-  .mcard:hover{box-shadow:0 4px 14px rgba(15,23,42,.08)}
+  /* ---- danh sách số: mỗi cột có 1 hàng tiêu đề riêng, card tách biệt ---- */
+  .manage-columns{--card-cols:16px minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr) 24px;
+                  --card-gap:8px;--head-pl:18px;--head-pr:15px;
+                  display:grid;grid-template-columns:repeat(var(--col-count,3),minmax(0,1fr));
+                  gap:14px;align-items:start;margin-top:10px}
+  .manage-col{min-width:0;display:flex;flex-direction:column;gap:14px}
+  .col-head{display:grid;grid-template-columns:var(--card-cols);column-gap:var(--card-gap);
+            padding:0 var(--head-pr) 2px var(--head-pl);
+            font-size:11px;font-weight:700;letter-spacing:.05em;color:var(--muted);text-transform:uppercase}
+  .col-head span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mcard{display:grid;grid-template-columns:var(--card-cols);
+         column-gap:var(--card-gap);align-items:center;background:#fff;
+         border:1px solid #e2e8f0;border-left:4px solid #c7d4e4;border-radius:14px;
+         padding:12px 14px;min-width:0;
+         box-shadow:0 1px 2px rgba(15,23,42,.04),0 6px 16px rgba(15,23,42,.05);
+         transition:border-color .15s,box-shadow .15s,transform .15s}
+  .mcard:hover{transform:translateY(-1px);box-shadow:0 2px 4px rgba(15,23,42,.06),0 10px 22px rgba(15,23,42,.08)}
   .mcard.s-avail{border-left-color:var(--success)}
   .mcard.s-sold{border-left-color:var(--danger)}
   .mcard.s-stale{border-left-color:#94a3b8}
   .mcard.s-none{border-left-color:#c7d4e4}
-  #app button.mcard-dot{grid-column:1;grid-row:1/3;width:14px;height:14px;border-radius:50%;border:0;
+  #app button.mcard-dot{grid-column:1;grid-row:1;width:14px;height:14px;border-radius:50%;border:0;
                         padding:0;min-width:0;background:#c7d4e4;cursor:pointer;
                         box-shadow:0 0 0 3px rgba(148,163,184,.14)}
   #app button.mcard-dot.s-avail{background:var(--success);box-shadow:0 0 0 3px rgba(22,163,74,.16)}
   #app button.mcard-dot.s-sold{background:var(--danger);box-shadow:0 0 0 3px rgba(220,38,38,.16)}
   #app button.mcard-dot.s-stale{background:#94a3b8;box-shadow:0 0 0 3px rgba(148,163,184,.14)}
   #app button.mcard-dot.s-none{background:#c7d4e4;box-shadow:0 0 0 3px rgba(148,163,184,.12)}
-  .mcard-label{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted);
-               text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mcard-label.l1{grid-column:2;grid-row:1}
-  .mcard-label.l2{grid-column:3;grid-row:1}
-  .mcard-label.l3{grid-column:4;grid-row:1}
-  #app input.mcard-phone,#app input.mcard-ck{grid-row:2;width:100%;min-width:0;border:1px solid var(--border);
+  #app input.mcard-phone,#app input.mcard-ck{grid-row:1;width:100%;min-width:0;border:1px solid var(--border);
                          border-radius:8px;background:#fff;color:var(--text);font-size:16px;padding:7px 8px}
   #app input.mcard-phone{grid-column:2;font-size:16px;font-weight:700;letter-spacing:.2px;color:var(--sdt);background:#f8fafc}
   #app input.mcard-ck.ck2{grid-column:3}
   #app input.mcard-ck.ck3{grid-column:4}
   #app input.mcard-phone:focus,#app input.mcard-ck:focus{border-color:var(--primary);background:#fff;outline:none;
                          box-shadow:0 0 0 3px rgba(37,99,235,.1)}
-  #app button.mcard-del{grid-column:5;grid-row:1/3;align-self:center;justify-self:center;
+  #app button.mcard-del{grid-column:5;grid-row:1;align-self:center;justify-self:center;
                         width:24px;height:24px;border:1px solid transparent;border-radius:6px;padding:0;min-width:0;
                         background:transparent;color:#94a3b8;font-size:15px;line-height:1;cursor:pointer;
                         display:flex;align-items:center;justify-content:center}
@@ -261,11 +265,14 @@
     .addtabs{width:100%}
     #app button.addtab{flex:1;padding:8px 6px;text-align:center}
     .manage-actions button{min-width:0;flex:1}
-    .mcard{grid-template-columns:12px minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 20px;column-gap:6px;padding:9px 10px}
-    .mcard-label{font-size:10px}
+    .manage-columns{--card-cols:14px minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 22px;
+                    --card-gap:6px;--head-pl:16px;--head-pr:13px;grid-template-columns:1fr;gap:12px}
+    .manage-col{gap:12px}
+    .col-head{font-size:10px}
+    .mcard{padding:10px 12px}
+    #app input.mcard-phone,#app input.mcard-ck{padding:7px 6px}
     #app input.mcard-ck{font-size:16px}
-    #app button.mcard-del{width:20px;height:20px;font-size:14px}
-    .manage-cards{grid-template-columns:1fr}
+    #app button.mcard-del{width:22px;height:22px;font-size:14px}
   }
   @media print{
     @page{size:1448px 1086px;margin:0}
@@ -403,7 +410,7 @@
         <div style="margin-top:6px">
           <button id="lastCheckBtn" class="ghost" style="flex:0 0 auto;min-width:0;padding:4px 10px;font-size:12px">Lần check cuối: chưa có</button>
         </div>
-        <div id="manageCards" class="manage-cards"></div>
+        <div id="manageCards" class="manage-columns"></div>
 
         <div style="margin-top:14px">
           <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Xem trước poster (chỉ số còn)</h2>
@@ -833,17 +840,27 @@ function update(){
 
 /* ================= manage tab ================= */
 function isMobileView(){ return window.innerWidth <= 760; }
+function manageColumnCount(){
+  const w = window.innerWidth;
+  if (w <= 900) return 1;
+  if (w <= 1320) return 2;
+  return 3;
+}
 
-// Render lai bang/card khi co giãn hoặc xoay ngang qua breakpoint (trước đây bị "đơ")
+// Render lai card khi đổi breakpoint mobile hoặc đổi số cột (kéo giãn / xoay ngang)
 const mqMobile = window.matchMedia ? window.matchMedia("(max-width: 760px)") : null;
 let lastMobileState = mqMobile ? mqMobile.matches : isMobileView();
+let lastManageCols = manageColumnCount();
 function handleViewportChange(){
   const now = window.innerWidth <= 760;
-  if (now !== lastMobileState){
+  const cols = manageColumnCount();
+  if (now !== lastMobileState || cols !== lastManageCols){
     lastMobileState = now;
+    lastManageCols = cols;
     if (currentUser && manageRows.length) renderManage();
   }
 }
+window.addEventListener("resize", handleViewportChange, {passive:true});
 if (mqMobile){
   if (mqMobile.addEventListener) mqMobile.addEventListener("change", handleViewportChange);
   else if (mqMobile.addListener) mqMobile.addListener(handleViewportChange);
@@ -856,9 +873,6 @@ function buildManageCard(r, i){
   card.title = statusTitle(r);
   card.innerHTML = `
     <button type="button" class="mcard-dot ${statusClass(r[3], r[4])}" data-status="${i}" title="${esc(statusTitle(r))} — bấm để đổi" aria-label="Trạng thái: ${esc(statusTitle(r))} — bấm để đổi"></button>
-    <span class="mcard-label l1" title="Số thuê bao">SĐT</span>
-    <span class="mcard-label l2" title="Cam kết gốc">CAM KẾT GỐC</span>
-    <span class="mcard-label l3" title="Cam kết mới">CAM KẾT MỚI</span>
     <input class="mcard-phone" type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0" placeholder="0846 74 7979" title="Số thuê bao">
     <input class="mcard-ck ck2" type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1" placeholder="1500k" title="Cam kết gốc">
     <input class="mcard-ck ck3" type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2" placeholder="800k" title="Cam kết mới">
@@ -914,12 +928,25 @@ document.addEventListener("click", e => {
 });
 
 function renderManage(){
-  const cards = $("manageCards");
-  if (!cards) return;
+  const host = $("manageCards");
+  if (!host) return;
+  const cols = manageColumnCount();
+  lastManageCols = cols;
+  host.style.setProperty("--col-count", cols);
   const frag = document.createDocumentFragment();
-  manageRows.forEach((r, i) => frag.appendChild(buildManageCard(r, i)));
-  cards.innerHTML = "";
-  cards.appendChild(frag);
+  for (let c = 0; c < cols; c++){
+    const col = document.createElement("div");
+    col.className = "manage-col";
+    const head = document.createElement("div");
+    head.className = "col-head";
+    head.setAttribute("aria-hidden", "true");
+    head.innerHTML = "<span></span><span>Số thuê bao</span><span>Cam kết gốc</span><span>Cam kết mới</span><span></span>";
+    col.appendChild(head);
+    for (let i = c; i < manageRows.length; i += cols) col.appendChild(buildManageCard(manageRows[i], i));
+    frag.appendChild(col);
+  }
+  host.innerHTML = "";
+  host.appendChild(frag);
   $("manageCount").textContent = manageRows.length + " số";
   updateStats();
 }
