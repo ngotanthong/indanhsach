@@ -1196,7 +1196,9 @@ async function checkAllStatus(force){
     let alreadyCount = 0;
     let bcLimit = null;
     try {
-      const bc = await apiCall({ action: "beginCheck", username: currentUser, nums: ordered.map(r => r[0]) });
+      // GAS beginCheck mong chuoi JSON (JSON.parse). Gui string de chay ngay ca voi ban da deploy.
+      const bc = await apiCall({ action: "beginCheck", username: currentUser,
+                                 nums: JSON.stringify(ordered.map(r => r[0])) });
       if (bc && bc.ok === false && bc.error === "expired"){
         setStatus("Tài khoản đã hết hạn (" + fmtDMY(bc.expiry) + ")");
         return;
@@ -1397,7 +1399,7 @@ function startAutoCheck(){
   if (checkTimer) clearInterval(checkTimer);
   if (syncTimer) clearInterval(syncTimer);
   if (profileTimer) clearInterval(profileTimer);
-  refreshProfile().then(checkAllStatus);
+  refreshProfile().then(() => checkAllStatus()); // khong truyen data vao tham so force
   checkTimer = setInterval(async () => { await syncFromSheet(); checkAllStatus(); }, 15 * 60 * 1000);
   syncTimer = setInterval(syncFromSheet, 5 * 60 * 1000);
   // cap nhat gioi han/han dung gan nhu tuc thi (30 giay/lan, chi khi tab dang mo)

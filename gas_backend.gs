@@ -499,9 +499,12 @@ function dayString(v) {
 }
 
 function beginCheck(username, numsRaw) {
-  // numsRaw: JSON array cac so can check (giu nguyen chuoi goc)
+  // Nhan ca 2 dang: mang (POST tu web) hoac chuoi JSON (GET / ban cu)
   let nums = [];
-  try { nums = JSON.parse(numsRaw || "[]"); } catch (e) { nums = []; }
+  if (Array.isArray(numsRaw)) nums = numsRaw.slice();
+  else {
+    try { nums = JSON.parse(numsRaw || "[]"); } catch (e) { nums = []; }
+  }
   if (!Array.isArray(nums)) nums = [];
   nums = nums.map(function (x) { return String(x == null ? "" : x); });
 
