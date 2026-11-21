@@ -189,22 +189,34 @@
   .add-pane[hidden]{display:none}
   .bulk-label{font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:6px}
   .bulk-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-  .manage-cards{display:none}
-  .mcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px;
-          display:flex;flex-direction:column;gap:8px;margin-top:8px}
-  .mcard-head{display:flex;align-items:center;justify-content:space-between}
-  .mcard-stt{font-size:12px;font-weight:700;color:var(--muted)}
-  .mcard label{display:flex;flex-direction:column;gap:4px;font-size:12px;font-weight:600;color:var(--muted)}
-  .mcard label input{font-size:14px}
+  /* ---- danh sách số: lưới card, tự chia cột theo bề rộng màn hình ---- */
+  .manage-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-top:10px}
+  .mcard{position:relative;background:#fff;border:1px solid var(--border);border-left:3px solid #c7d4e4;
+         border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;
+         box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+  .mcard:hover{box-shadow:0 4px 14px rgba(15,23,42,.08)}
+  .mcard.s-avail{border-left-color:var(--success)}
+  .mcard.s-sold{border-left-color:var(--danger)}
+  .mcard.s-stale{border-left-color:#94a3b8}
+  .mcard.s-none{border-left-color:#c7d4e4}
+  .mcard-head{display:flex;align-items:center;gap:8px;min-width:0}
+  .mcard-stt{font-size:11.5px;font-weight:700;color:var(--muted);background:#f1f5f9;border-radius:6px;padding:1px 7px;flex:0 0 auto}
+  .mcard-time{flex:1;min-width:0;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mcard-time.fresh{color:var(--success);font-weight:600}
+  .mcard-del{border:0;background:#fee2e2;color:#b91c1c;width:24px;height:24px;border-radius:6px;
+             font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
+             padding:0;min-width:0;flex:0 0 auto}
+  .mcard-del:hover{background:#fecaca}
+  .mcard-line{display:flex;gap:8px;align-items:stretch}
+  .mcard-phone{flex:1;min-width:0;font-size:15px;font-weight:700;letter-spacing:.4px;color:var(--sdt);
+               border:1px solid var(--border);border-radius:7px;padding:7px 9px;background:#f8fafc}
+  .mcard-phone:focus{border-color:var(--primary);background:#fff;outline:none}
+  .mcard-status{flex:0 0 96px;width:96px;min-width:0;font-size:12.5px !important}
   .mcard-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .mcard .mcard-del{padding:4px 10px;font-size:12px}
-  .mcard input{width:100%}
-  table.mtable{width:100%;border-collapse:collapse;margin-top:8px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;min-width:620px}
-  table.mtable th,table.mtable td{border-bottom:1px solid var(--border);padding:8px 10px;text-align:left}
-  table.mtable th{background:#f9fafb;color:var(--muted);font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em}
-  table.mtable tbody tr:hover{background:#fafbfc}
-  table.mtable input{width:100%;border:1px solid var(--border);border-radius:6px;padding:5px 7px;font-size:13px;background:#fff}
-  table.mtable input:focus{border-color:var(--primary);outline:none}
+  .mcard-field{display:flex;flex-direction:column;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);min-width:0}
+  .mcard-field input{width:100%;min-width:0;font-size:13.5px;color:var(--text);border:1px solid var(--border);
+                     border-radius:7px;padding:6px 8px;background:#fff}
+  .mcard-field input:focus{border-color:var(--primary);outline:none}
   .bulk{margin-top:14px}
   .bulk textarea{height:120px}
   .bulk label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
@@ -241,8 +253,7 @@
     #app button.addtab{flex:1;padding:8px 6px;text-align:center}
     .manage-actions button{min-width:0;flex:1}
     .mcard{padding:10px}
-    table.mtable{display:none}
-    .manage-cards{display:flex;flex-direction:column;gap:10px;margin-top:8px}
+    .manage-cards{grid-template-columns:1fr}
   }
   @media print{
     @page{size:1448px 1086px;margin:0}
@@ -378,12 +389,6 @@
         </div>
         <div style="margin-top:6px">
           <button id="lastCheckBtn" class="ghost" style="flex:0 0 auto;min-width:0;padding:4px 10px;font-size:12px">Lần check cuối: chưa có</button>
-        </div>
-        <div style="overflow-x:auto">
-        <table class="mtable">
-          <thead><tr><th style="width:40px">STT</th><th>Số thuê bao</th><th>CK gốc</th><th>CK mới</th><th>Trạng thái</th><th style="width:70px">Xóa</th></tr></thead>
-          <tbody id="manageTbody"></tbody>
-        </table>
         </div>
         <div id="manageCards" class="manage-cards"></div>
 
@@ -744,6 +749,16 @@ function nowStamp(){
   const p = n => ("0" + n).slice(-2);
   return d.getFullYear() + "-" + p(d.getMonth()+1) + "-" + p(d.getDate()) + " " + p(d.getHours()) + ":" + p(d.getMinutes());
 }
+// Hien thi thoi diem check gon: "Hôm nay 22:55" / "20/11 10:00"
+function fmtCheckTime(ts){
+  const s = String(ts||"").trim();
+  if (!s) return "";
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})[ T](\d{2}):(\d{2})/);
+  if (!m) return s;
+  const hm = m[4] + ":" + m[5];
+  if ((m[1] + "-" + m[2] + "-" + m[3]) === todayISO()) return "Hôm nay " + hm;
+  return m[3] + "/" + m[2] + " " + hm;
+}
 // "Da check trong hom nay" = co thoi diem check va trung ngay hom nay
 function isFreshCheck(ts){
   const s = String(ts || "").trim();
@@ -766,6 +781,16 @@ function statusStyle(v, checkedAt){
     return "background:#dc2626;color:#fff;border:none;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
   }
   return "background:#e8effa;color:#1a4f9c;border:1px solid #c7d4e4;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
+}
+function statusClass(v, checkedAt){
+  const s = String(v||"").toLowerCase();
+  if (s.includes("còn") || s === "con" || s.includes("available")) {
+    return isFreshCheck(checkedAt) ? "s-avail" : "s-stale";
+  }
+  if (s.includes("hết") || s.includes("het") || s.includes("đã bán") || s.includes("da ban") || s.includes("sold")) {
+    return "s-sold";
+  }
+  return "s-none";
 }
 
 /* ================= render poster ================= */
@@ -822,19 +847,22 @@ if (mqMobile){
 
 function buildManageCard(r, i){
   const card = document.createElement("div");
-  card.className = "mcard";
+  card.className = "mcard " + statusClass(r[3], r[4]);
+  card.dataset.i = i;
   card.innerHTML = `
     <div class="mcard-head">
       <span class="mcard-stt">#${i+1}</span>
-      <button class="danger mcard-del" data-del="${i}">Xóa</button>
+      <span class="mcard-time${isFreshCheck(r[4]) ? " fresh" : ""}">${r[4] ? (isFreshCheck(r[4]) ? "✓ " : "Check cũ: ") + fmtCheckTime(r[4]) : "Chưa check hôm nay"}</span>
+      <button class="mcard-del" data-del="${i}" title="Xóa số này" aria-label="Xóa số ${esc(r[0]||(i+1))}">×</button>
     </div>
-    <label>Số thuê bao<input type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0"></label>
+    <div class="mcard-line">
+      <input class="mcard-phone" type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0" placeholder="Số thuê bao">
+      <input class="mcard-status" type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" placeholder="Trạng thái" style="${statusStyle(r[3], r[4])}" title="${r[4] ? "Check lúc " + esc(r[4]) : "Chưa check hôm nay (trạng thái cũ)"}">
+    </div>
     <div class="mcard-row">
-      <label>CK gốc<input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1"></label>
-      <label>CK mới<input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2"></label>
-    </div>
-    <label>Trạng thái<input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" style="${statusStyle(r[3], r[4])}" title="${r[4] ? "Check lúc " + esc(r[4]) : "Chưa check hôm nay (trạng thái cũ)"}"></label>
-  `;
+      <label class="mcard-field"><span>CK gốc</span><input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1" placeholder="1500k"></label>
+      <label class="mcard-field"><span>CK mới</span><input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2" placeholder="600k"></label>
+    </div>`;
   return card;
 }
 
@@ -842,7 +870,7 @@ function buildManageCard(r, i){
 document.addEventListener("change", e => {
   const t = e.target;
   if (!t || t.tagName !== "INPUT") return;
-  if (!t.closest("#manageTbody, #manageCards")) return;
+  if (!t.closest("#manageCards")) return;
   const i = Number(t.dataset.i), f = Number(t.dataset.f);
   if (!manageRows[i]) return;
   manageRows[i][f] = t.value;
@@ -851,13 +879,19 @@ document.addEventListener("change", e => {
     manageRows[i][4] = "";
     t.style.cssText = statusStyle(t.value, "");
     t.title = "Chưa check hôm nay (trạng thái cũ)";
+    const card = t.closest(".mcard");
+    if (card){
+      card.className = "mcard " + statusClass(t.value, "");
+      const tm = card.querySelector(".mcard-time");
+      if (tm){ tm.textContent = "Chưa check hôm nay"; tm.classList.remove("fresh"); }
+    }
   }
   updateStats();
   saveNumbers(manageRows);
 });
 document.addEventListener("click", e => {
   const b = e.target && e.target.closest ? e.target.closest("button[data-del]") : null;
-  if (!b || !b.closest("#manageTbody, #manageCards")) return;
+  if (!b || !b.closest("#manageCards")) return;
   const i = Number(b.dataset.del);
   manageRows.splice(i, 1);
   renderManage();
@@ -866,26 +900,12 @@ document.addEventListener("click", e => {
 });
 
 function renderManage(){
-  const tb = $("manageTbody");
   const cards = $("manageCards");
-  if (tb) tb.innerHTML = "";
-  if (cards) cards.innerHTML = "";
-  if (isMobileView() && cards){
-    manageRows.forEach((r, i) => cards.appendChild(buildManageCard(r, i)));
-  } else if (tb) {
-    const frag = document.createDocumentFragment();
-    manageRows.forEach((r, i) => {
-      const tr = document.createElement("tr");
-      tr.innerHTML = `<td>${i+1}</td>
-        <td><input type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0"></td>
-        <td><input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1"></td>
-        <td><input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2"></td>
-        <td><input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" style="${statusStyle(r[3], r[4])}" title="${r[4] ? "Check lúc " + esc(r[4]) : "Chưa check hôm nay (trạng thái cũ)"}"></td>
-        <td><button class="danger" data-del="${i}" style="padding:4px 6px;font-size:12px;min-width:0;flex:0 0 auto">Xóa</button></td>`;
-      frag.appendChild(tr);
-    });
-    tb.appendChild(frag);
-  }
+  if (!cards) return;
+  const frag = document.createDocumentFragment();
+  manageRows.forEach((r, i) => frag.appendChild(buildManageCard(r, i)));
+  cards.innerHTML = "";
+  cards.appendChild(frag);
   $("manageCount").textContent = manageRows.length + " số";
   updateStats();
 }
@@ -1100,13 +1120,21 @@ let checkRunning = false;
 function paintManageRow(r){
   const idx = manageRows.indexOf(r);
   if (idx < 0) return;
-  const sel = (isMobileView() ? "#manageCards " : "#manageTbody ") +
-    '[data-i="' + idx + '"][data-f="3"]';
-  const inp = document.querySelector(sel);
+  const inp = document.querySelector('#manageCards [data-i="' + idx + '"][data-f="3"]');
   if (inp){
     inp.value = r[3] || "";
     inp.style.cssText = statusStyle(r[3], r[4]);
     inp.title = r[4] ? "Check lúc " + r[4] : "Chưa check hôm nay (trạng thái cũ)";
+  }
+  const card = document.querySelector('#manageCards .mcard[data-i="' + idx + '"]');
+  if (card){
+    card.className = "mcard " + statusClass(r[3], r[4]);
+    const tm = card.querySelector(".mcard-time");
+    if (tm){
+      const fresh = isFreshCheck(r[4]);
+      tm.textContent = r[4] ? (fresh ? "✓ " : "Check cũ: ") + fmtCheckTime(r[4]) : "Chưa check hôm nay";
+      tm.classList.toggle("fresh", fresh);
+    }
   }
 }
 
