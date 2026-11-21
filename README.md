@@ -17,6 +17,12 @@ Công cụ điền số thuê bao + cam kết vào tấm poster **Số Đẹp Vi
 - Trạng thái số trong tab **Quản lý số**: 🟩 Còn (đã check hôm nay, xanh), ⬜ Còn (trạng thái cũ/chưa check hôm nay, xám), 🟥 Hết (đỏ). Chỉ số **Còn** đã check hôm nay mới được điền vào poster.
 - Quản lý **hạn sử dụng tài khoản** trong Sheet (`expiry_date`): quá hạn sẽ không đăng nhập/không check được.
 
+## Tối ưu hiệu năng (bản mới)
+- **Check nhanh hơn nhiều**: chỉ check số **chưa check hôm nay** (số đã check được bỏ qua), chạy song song 3 số/lô ở client; backend gọi VNPT song song theo lô, thử bucket ưu tiên trước và **dừng sớm khi tìm thấy** thay vì 11 bucket × 2 vòng tuần tự. Kết quả cache 5 phút; nút “Lần check cuối” ép check lại thật (bỏ cache).
+- **Đồng bộ/ghi Sheet**: chuyển API sang **POST** (không giới hạn độ dài URL như GET), ghi Sheet một lần thay vì nhiều lần; tránh `clear()` toàn sheet.
+- **Giao diện**: tự chuyển bảng ⇄ card khi xoay/co giãn màn hình; form nhập 1 cột trên điện thoại; topbar gọn; ẩn khối “Nhập hàng loạt” khi đang ở tab “Thêm số từng cái”; thống kê “Còn” chỉ tính số đã check hôm nay.
+- ⚠️ Sau khi cập nhật `gas_backend.gs`, phải **Deploy → Manage deployments → ✏️ → Version: New version → Deploy** thì backend mới có hiệu lực.
+
 ## Cách dùng nhanh nhất — `index.html`
 1. Mở `index.html` bằng Chrome.
 2. Đăng nhập: `ngotanthong` / `ngotanthong`.

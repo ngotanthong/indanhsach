@@ -35,7 +35,7 @@ function doPost(e) {
   if (action === "profile") return jsonOut(profile(data.username));
   if (action === "list") return jsonOut(listNumbers(data.username));
   if (action === "save") return jsonOut(saveNumbers(data.username, data.rows));
-  if (action === "check") return jsonOut(checkNumber(data.phone, data.ck));
+  if (action === "check") return jsonOut(checkNumber(data.phone, data.ck, !!data.force));
   if (action === "register") return jsonOut(registerUser(data.username, data.password, data.ten, data.ref));
   if (action === "referrers") return jsonOut(listReferrers());
   if (action === "beginCheck") return jsonOut(beginCheck(data.username, data.nums));
@@ -53,7 +53,7 @@ function doGet(e) {
     try { rows = JSON.parse(p.data || "[]"); } catch (err) {}
     return jsonOut(saveNumbers(p.username, rows));
   }
-  if (action === "check") return jsonOut(checkNumber(p.phone, p.ck));
+  if (action === "check") return jsonOut(checkNumber(p.phone, p.ck, String(p.force) === "1"));
   if (action === "register") return jsonOut(registerUser(p.username, p.password, p.ten, p.ref));
   if (action === "referrers") return jsonOut(listReferrers());
   if (action === "beginCheck") return jsonOut(beginCheck(p.username, p.nums));
@@ -231,7 +231,11 @@ function saveNumbers(username, rows) {
   for (let i = 1; i < data.length; i++) {
     if (String(data[i][0]).trim() !== String(username).trim()) keep.push(padRow(data[i]));
   }
-  sh.clear();
+  // Chi xoa vung du lieu dang dung (nhanh hon sh.clear() toan sheet)
+  const lastRow = sh.getLastRow();
+  if (lastRow > 0) {
+    sh.getRange(1, 1, lastRow, Math.max(WIDTH, sh.getLastColumn())).clearContent();
+  }
   if (keep.length) {
     keep[0][5] = "checked_at";
     sh.getRange(1, 1, keep.length, WIDTH).setValues(keep);
@@ -270,7 +274,47 @@ function commitBucket(ck) {
   return best;
 }
 
-function checkNumber(phone, ck) {
+// Goi nhieu bucket SONG SONG theo lo (fetchAll) de giam thoi gian choi.
+// Tra ve mang ket qua dung thu tu buckets.
+function fetchBucketsConcurrently(urls, target) {
+  const out = [];
+  const CHUNK = 5;
+  let stop = false; // da tim thay so -> khong can goi them bucket nua
+  for (let i = 0; i < urls.length && !stop; i += CHUNK) {
+    const slice = urls.slice(i, i + CHUNK);
+    let res = [];
+    try {
+      res = UrlFetchApp.fetchAll(slice.map(function (url) {
+        return { url: url, muteHttpExceptions: true, followRedirects: true };
+      }));
+    } catch (e) { res = []; }
+    for (let j = 0; j < slice.length; j++) {
+      let code = -1, text = "";
+      try {
+        code = res[j].getResponseCode();
+        text = res[j].getContentText();
+      } catch (e) { /* response khong doc duoc */ }
+      if (code < 200 || code >= 300) { out.push({ index: i + j, ok: false, code: code }); continue; }
+      try {
+        const json = JSON.parse(text);
+        const ec = (json && typeof json.errorCode !== "undefined") ? json.errorCode : 0;
+        // errorCode -1 = bucket khong hop le / loi tam thoi
+        if (ec === -1) { out.push({ index: i + j, ok: false, code: code, ec: -1 }); continue; }
+        const data = (json && json.data) ? json.data : [];
+        const found = Array.isArray(data) && data.some(function (d) {
+          return String(d.so_tb || "").replace(/\s/g, "") === target;
+        });
+        out.push({ index: i + j, ok: true, found: found });
+        if (found) stop = true;
+      } catch (e) {
+        out.push({ index: i + j, ok: false, code: code });
+      }
+    }
+  }
+  return out;
+}
+
+function checkNumber(phone, ck, force) {
   const digits = String(phone || "").replace(/\D/g, "");
   if (digits.length < 9) return { ok: false, error: "invalid phone" };
 
@@ -283,60 +327,77 @@ function checkNumber(phone, ck) {
   const bucket = commitBucket(ck);
   const target = digits.startsWith("0") ? ("84" + digits.substring(1)) : digits;
 
+  // Cache 5 phut: auto-check lap lai khong con phai goi VNPT moi lan.
+  const cache = CacheService.getScriptCache();
+  const ckey = "chk:" + target;
+  if (!force) {
+    try {
+      const hit = cache.get(ckey);
+      if (hit) {
+        const c = JSON.parse(hit);
+        if (typeof c.available === "boolean") {
+          return { ok: true, available: c.available, bucket: bucket, cached: true };
+        }
+      }
+    } catch (e) { /* bo qua cache */ }
+  }
+
   // Danh sach bucket commit chuan cua VNPT
   const ALL_BUCKETS = [100000, 150000, 200000, 300000, 400000, 500000, 600000, 800000, 1000000, 1200000, 1500000];
   // Thu bucket dung truoc (neu co), sau do thu tat ca cac bucket con lai de dam bao chinh xac
-  let bucketsToTry = [];
+  const bucketsToTry = [];
   if (bucket && ALL_BUCKETS.indexOf(bucket) !== -1) bucketsToTry.push(bucket);
   ALL_BUCKETS.forEach(function (b) { if (bucketsToTry.indexOf(b) === -1) bucketsToTry.push(b); });
 
-  // 2 vong thu de tranh ket qua sai tam thoi cua API
-  const PASSES = 2;
-  let hadError = false;
+  const mkUrl = function (commit) {
+    return "https://digishop.vnpt.vn/apiprod/v2/simso/num_search?search=" +
+      encodeURIComponent(search) + "&prefix=" + encodeURIComponent(prefix) +
+      "&commit=" + commit + "&_t=" + Date.now();
+  };
+
+  let pending = bucketsToTry;
   let sawAvailable = false;
-  let cleanNotFoundPasses = 0;
+  let cleanNotFound = 0;
+  let hadError = false;
 
-  for (let pass = 0; pass < PASSES; pass++) {
-    let passFound = false;
-    let passHasCleanNotFound = false;
-    let passHadError = false;
-
-    for (let i = 0; i < bucketsToTry.length; i++) {
-      const commit = bucketsToTry[i];
-      const url = "https://digishop.vnpt.vn/apiprod/v2/simso/num_search?search=" +
-        encodeURIComponent(search) + "&prefix=" + encodeURIComponent(prefix) +
-        "&commit=" + commit + "&_t=" + Date.now();
-      try {
-        const resp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true });
-        const code = resp.getResponseCode();
-        if (code < 200 || code >= 300) { passHadError = true; continue; }
-        const json = JSON.parse(resp.getContentText());
-        const data = (json && json.data) ? json.data : [];
-        const ec = (json && typeof json.errorCode !== "undefined") ? json.errorCode : 0;
-        // errorCode -1 = bucket khong hop le / loi tam thoi -> bo qua bucket nay
-        if (ec === -1) { passHadError = true; continue; }
-        const found = Array.isArray(data) && data.some(function (d) {
-          return String(d.so_tb || "").replace(/\s/g, "") === target;
-        });
-        if (found) { passFound = true; break; }
-        passHasCleanNotFound = true;
-      } catch (e) {
-        passHadError = true; passClean = false;
-      }
-      Utilities.sleep(120);
+  // Uu tien bucket dung (thuong gap nhat): chi 1 request la co ket qua ngay
+  if (bucket && ALL_BUCKETS.indexOf(bucket) !== -1) {
+    const first = fetchBucketsConcurrently([mkUrl(bucket)], target)[0];
+    if (first && first.ok && first.found) {
+      sawAvailable = true;
+    } else if (first && first.ok) {
+      cleanNotFound++;
+      pending = bucketsToTry.filter(function (b) { return b !== bucket; });
+    } else {
+      hadError = true; // loi tam thoi -> se thu lai cung cac bucket khac
     }
-
-    if (passFound) { sawAvailable = true; break; }
-    if (passHadError) hadError = true;
-    if (passHasCleanNotFound) cleanNotFoundPasses++;
-
-    if (pass < PASSES - 1) Utilities.sleep(500);
   }
 
-  if (sawAvailable) return { ok: true, available: true, bucket: bucket };
-  if (cleanNotFoundPasses >= 1) return { ok: true, available: false, bucket: bucket };
-  if (hadError) return { ok: false, error: "network" };
-  return { ok: true, available: false, bucket: bucket };
+  // Toi da 2 luot: luot 1 thu het; luot 2 chi thu lai cac bucket bi loi (tranh ket qua sai tam thoi)
+  for (let pass = 0; pass < 2 && !sawAvailable && pending.length; pass++) {
+    const res = fetchBucketsConcurrently(pending.map(mkUrl), target);
+    const failed = [];
+    for (let i = 0; i < res.length; i++) {
+      const r = res[i];
+      if (!r.ok) { failed.push(pending[r.index]); hadError = true; continue; }
+      if (r.found) { sawAvailable = true; break; }
+      cleanNotFound++;
+    }
+    if (sawAvailable) break;
+    pending = failed;
+    if (pending.length) Utilities.sleep(300);
+  }
+
+  let result;
+  if (sawAvailable) result = { ok: true, available: true, bucket: bucket };
+  else if (cleanNotFound > 0) result = { ok: true, available: false, bucket: bucket };
+  else if (hadError) result = { ok: false, error: "network" };
+  else result = { ok: true, available: false, bucket: bucket };
+
+  if (typeof result.available === "boolean") {
+    try { cache.put(ckey, JSON.stringify({ available: result.available }), 300); } catch (e) {}
+  }
+  return result;
 }
 
 function pad2(n) { return ("0" + n).slice(-2); }
@@ -513,8 +574,8 @@ function beginCheck(username, numsRaw) {
     if (!sh.getRange(1, 9).getValue()) {
       try { sh.getRange(1, 9).setValue("checked_today"); } catch (e) {}
     }
-    sh.getRange(i + 1, 6, 1, 2).setValues([[checkedList.length, today]]);
-    sh.getRange(i + 1, 9).setValue(today + "|" + checkedList.join(","));
+    // Ghi mot lan cho nhanh (F=checks_today, G=last_check_date, H=expiry giu nguyen, I=checked_today)
+    sh.getRange(i + 1, 6, 1, 4).setValues([[checkedList.length, today, r[7] == null ? "" : r[7], today + "|" + checkedList.join(",")]]);
 
     const allowedNumbers = already.concat(allowedFresh);
     const denied = fresh.slice(allowedFresh.length);
@@ -523,6 +584,8 @@ function beginCheck(username, numsRaw) {
       allowed: allowedNumbers.length > 0,
       allowed_count: allowedFresh.length,
       allowed_numbers: allowedNumbers,
+      fresh_numbers: allowedFresh,
+      already_numbers: already,
       denied_numbers: denied,
       free_count: already.length,
       remaining: remaining,

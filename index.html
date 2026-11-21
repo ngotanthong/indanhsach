@@ -28,7 +28,8 @@
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%}
   body{font-family:"Segoe UI","Inter",system-ui,-apple-system,BlinkMacSystemFont,sans-serif;
-        background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+        background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased;
+        -webkit-text-size-adjust:100%}
   #app{display:none;flex-direction:column;gap:16px;padding:20px 24px;max-width:1480px;margin:0 auto}
   body.open #app{display:flex}
 
@@ -72,12 +73,14 @@
   .mode-badge{font-size:11px;font-weight:600;padding:3px 9px;border-radius:999px;border:1px solid transparent;white-space:nowrap}
   .mode-badge.online{background:var(--success-soft);color:var(--success);border-color:#bbf7d0}
   .mode-badge.demo{background:var(--warn-soft);color:var(--warn);border-color:#fde68a}
+  .mode-badge.off{background:#f3f4f6;color:var(--muted);border-color:var(--border)}
   #topbar .userbox button{padding:6px 12px;font-size:12.5px}
   #topbar .userbox button.logout-icon{padding:0;width:30px;height:30px;display:inline-flex;align-items:center;justify-content:center;background:transparent}
   .hsd-badge{font-size:12px;font-weight:600;color:var(--muted);background:#f3f4f6;
              border:1px solid var(--border);border-radius:999px;padding:3px 9px;white-space:nowrap}
   .hsd-badge.warn{color:var(--warn);background:var(--warn-soft);border-color:#fde68a}
   .hsd-badge.danger{color:var(--danger);background:var(--danger-soft);border-color:#fecaca}
+  .hsd-badge:empty{display:none}
 
   /* ---- tabs ---- */
   .tabs{display:flex;gap:4px;border-bottom:1px solid var(--border);padding:0 4px}
@@ -135,7 +138,7 @@
   .poster img{position:absolute;inset:0;width:100%;height:100%;display:block}
   .cell{position:absolute;transform:translate(-50%,-50%);white-space:nowrap;
         font-weight:bold;font-family:Arial,Helvetica,sans-serif;line-height:1;
-        font-size:calc(var(--fs) * 0.06906cqw)}
+        font-size:16px;font-size:calc(var(--fs) * 0.06906cqw)}
   .cell.sdt{color:var(--sdt)}
   .cell.ck{color:var(--ck)}
 
@@ -201,8 +204,6 @@
   .bulk textarea{height:120px}
   .bulk label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
   .status{font-size:12.5px;color:var(--muted);font-weight:600;margin-top:6px;min-height:16px}
-  #limitsInfo{color:var(--text)}
-  #limitsInfo:hover{color:var(--primary)}
   .legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
   .legend-item{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:999px;
                background:#f3f4f6;font-size:12px;font-weight:600;color:var(--text)}
@@ -216,15 +217,25 @@
 
   @media (max-width: 760px){
     #app{padding:12px 14px;gap:12px}
+    #topbar{flex-wrap:wrap;gap:6px;padding:8px 12px}
     #topbar .title{display:none}
+    #topbar .userbox{gap:6px;font-size:12px;flex-wrap:wrap}
+    #topbar .hello{display:none}
+    .mode-badge{font-size:10px;padding:2px 7px}
+    .hsd-badge{font-size:11px;padding:2px 7px}
     .create-wrap{flex-direction:column}
     .panel{width:100%;flex:0 0 auto;position:static}
     .stage{width:100%}
     textarea{font-size:16px}
     .opts{gap:10px}
     input[type=number]{width:56px;font-size:16px}
+    input[type=text],input[type=password]{font-size:16px}
     #lock .box{padding:26px 20px}
     .manage-grid{grid-template-columns:1fr}
+    .addtabs{width:100%}
+    .addtab{flex:1;padding:8px 6px;text-align:center}
+    .manage-actions button{min-width:0;flex:1}
+    .mcard{padding:10px}
     table.mtable{display:none}
     .manage-cards{display:flex;flex-direction:column;gap:10px;margin-top:8px}
   }
@@ -270,7 +281,7 @@
       <span class="title">Tools tạo danh sách số</span>
       <div class="userbox">
         <span id="modeBadge" class="mode-badge demo">Chế độ demo</span>
-        <span>Xin chào,</span>
+        <span class="hello">Xin chào,</span>
         <span class="name" id="userName">-</span>
         <span id="hsdBadge" class="hsd-badge"></span>
         <button id="logout" class="ghost logout-icon" title="Đăng xuất" aria-label="Đăng xuất">
@@ -287,7 +298,7 @@
     <div id="tab-manage" class="tabpane active">
       <div class="manage-box">
         <h2>Quản lý số của bạn</h2>
-        <div id="addTabBulk">
+        <div id="addTabBulk" style="display:none">
           <div class="bulk-card">
             <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
             <textarea id="mBulk" spellcheck="false" placeholder="0846 74 7979	1500k"></textarea>
@@ -299,9 +310,9 @@
         <div class="stats-card" id="statsCard">
           <div class="stats-grid">
             <div class="stat-tile"><div class="stat-label">Tổng số</div><div class="stat-value" id="statTotal">0</div></div>
-            <div class="stat-tile green"><div class="stat-label">Còn</div><div class="stat-value" id="statAvail">0</div></div>
+            <div class="stat-tile green"><div class="stat-label">Còn hôm nay</div><div class="stat-value" id="statAvail">0</div></div>
             <div class="stat-tile red"><div class="stat-label">Hết</div><div class="stat-value" id="statSold">0</div></div>
-            <div class="stat-tile blue"><div class="stat-label">Đã check hôm nay</div><div class="stat-value" id="statChecked">0</div></div>
+            <div class="stat-tile blue"><div class="stat-label">Đã check</div><div class="stat-value" id="statChecked">0</div></div>
           </div>
           <div class="stat-bars">
             <div class="stat-bar-row">
@@ -318,7 +329,7 @@
             <div class="stat-dist-legend">
               <span><i class="dot green"></i>Còn <b id="statAvail2">0</b></span>
               <span><i class="dot red"></i>Hết <b id="statSold2">0</b></span>
-              <span><i class="dot gray"></i>Chưa rõ <b id="statUnknown">0</b></span>
+              <span><i class="dot gray"></i>Chưa check hôm nay / khác <b id="statUnknown">0</b></span>
             </div>
           </div>
           <div class="stat-foot" id="statFoot"></div>
@@ -328,7 +339,7 @@
           <button class="addtab" data-addtab="bulk" style="border:0;background:transparent;color:#5b6b7f;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Nhập hàng loạt (Excel)</button>
         </div>
         <div id="addTabSingle">
-        <div class="manage-grid" style="grid-template-columns:1fr 1fr 1fr">
+        <div class="manage-grid">
           <div>
             <label>Số thuê bao</label>
             <input type="text" id="mSdt" placeholder="0846 74 7979">
@@ -371,7 +382,7 @@
           <h2 style="font-size:16px;margin-bottom:8px;color:#0a3c78">Xem trước poster (chỉ số còn)</h2>
           <div class="stage" style="container-type:inline-size">
             <div class="poster" id="posterM">
-              <img id="bgM" src="bckground.jpg" alt="poster">
+              <img id="bgM" src="bckground.jpg" alt="poster" loading="lazy">
             </div>
           </div>
           <div class="row" style="margin-top:8px">
@@ -464,15 +475,18 @@ function manageKey(u){ return "sodep_manage_" + u; }
 
 /* ================= API helpers ================= */
 async function apiCall(payload){
-  const params = new URLSearchParams();
-  for (const k in payload){
-    if (k === "rows") params.set("data", JSON.stringify(payload.rows));
-    else if (Array.isArray(payload[k])) params.set(k, JSON.stringify(payload[k]));
-    else params.set(k, payload[k] == null ? "" : payload[k]);
-  }
-  params.set("_", String(Date.now()));
+  // POST voi Content-Type text/plain -> khong bi CORS preflight, khong gioi han do dai URL nhu GET
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 25000);
   try {
-    const res = await fetch(API_URL + "?" + params.toString(), { method: "GET", credentials: "omit", cache: "no-store" });
+    const res = await fetch(API_URL, {
+      method: "POST",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload),
+      credentials: "omit",
+      cache: "no-store",
+      signal: ctrl.signal
+    });
     if (!res.ok) throw new Error("HTTP " + res.status);
     const text = await res.text();
     let data;
@@ -485,6 +499,8 @@ async function apiCall(payload){
     apiOnline = false;
     updateModeBadge();
     throw e;
+  } finally {
+    clearTimeout(timer);
   }
 }
 
@@ -780,6 +796,21 @@ function update(){
 /* ================= manage tab ================= */
 function isMobileView(){ return window.innerWidth <= 760; }
 
+// Render lai bang/card khi co giãn hoặc xoay ngang qua breakpoint (trước đây bị "đơ")
+const mqMobile = window.matchMedia ? window.matchMedia("(max-width: 760px)") : null;
+let lastMobileState = mqMobile ? mqMobile.matches : isMobileView();
+function handleViewportChange(){
+  const now = window.innerWidth <= 760;
+  if (now !== lastMobileState){
+    lastMobileState = now;
+    if (currentUser && manageRows.length) renderManage();
+  }
+}
+if (mqMobile){
+  if (mqMobile.addEventListener) mqMobile.addEventListener("change", handleViewportChange);
+  else if (mqMobile.addListener) mqMobile.addListener(handleViewportChange);
+}
+
 function buildManageCard(r, i){
   const card = document.createElement("div");
   card.className = "mcard";
@@ -798,30 +829,32 @@ function buildManageCard(r, i){
   return card;
 }
 
-function bindManageInputs(){
-  document.querySelectorAll("#manageTbody input, #manageCards input").forEach(inp => {
-    inp.addEventListener("change", e => {
-      const i = +e.target.dataset.i, f = +e.target.dataset.f;
-      if (!manageRows[i]) return;
-      manageRows[i][f] = e.target.value;
-      if (f === 3){
-        // sua tay = chua duoc check -> trang thai cu (xam)
-        manageRows[i][4] = "";
-        e.target.style.cssText = statusStyle(e.target.value, "");
-        e.target.title = "Chưa check hôm nay (trạng thái cũ)";
-      }
-      saveNumbers(manageRows);
-    });
-  });
-  document.querySelectorAll("#manageTbody button[data-del], #manageCards button[data-del]").forEach(b => {
-    b.addEventListener("click", e => {
-      const i = +e.target.dataset.del;
-      manageRows.splice(i, 1);
-      renderManage();
-      saveNumbers(manageRows);
-    });
-  });
-}
+/* Event delegation: 1 listener duy nhất thay vì gắn lại cho từng ô mỗi lần render */
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (!t || t.tagName !== "INPUT") return;
+  if (!t.closest("#manageTbody, #manageCards")) return;
+  const i = Number(t.dataset.i), f = Number(t.dataset.f);
+  if (!manageRows[i]) return;
+  manageRows[i][f] = t.value;
+  if (f === 3){
+    // sua tay = chua duoc check -> trang thai cu (xam)
+    manageRows[i][4] = "";
+    t.style.cssText = statusStyle(t.value, "");
+    t.title = "Chưa check hôm nay (trạng thái cũ)";
+  }
+  updateStats();
+  saveNumbers(manageRows);
+});
+document.addEventListener("click", e => {
+  const b = e.target && e.target.closest ? e.target.closest("button[data-del]") : null;
+  if (!b || !b.closest("#manageTbody, #manageCards")) return;
+  const i = Number(b.dataset.del);
+  manageRows.splice(i, 1);
+  renderManage();
+  renderManagePoster();
+  saveNumbers(manageRows);
+});
 
 function renderManage(){
   const tb = $("manageTbody");
@@ -830,8 +863,8 @@ function renderManage(){
   if (cards) cards.innerHTML = "";
   if (isMobileView() && cards){
     manageRows.forEach((r, i) => cards.appendChild(buildManageCard(r, i)));
-    bindManageInputs();
   } else if (tb) {
+    const frag = document.createDocumentFragment();
     manageRows.forEach((r, i) => {
       const tr = document.createElement("tr");
       tr.innerHTML = `<td>${i+1}</td>
@@ -840,32 +873,11 @@ function renderManage(){
         <td><input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2"></td>
         <td><input type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" style="${statusStyle(r[3], r[4])}" title="${r[4] ? "Check lúc " + esc(r[4]) : "Chưa check hôm nay (trạng thái cũ)"}"></td>
         <td><button class="danger" data-del="${i}" style="padding:4px 6px;font-size:12px;min-width:0;flex:0 0 auto">Xóa</button></td>`;
-      tb.appendChild(tr);
+      frag.appendChild(tr);
     });
-    tb.querySelectorAll("input").forEach(inp => {
-      inp.addEventListener("change", e => {
-        const i = +e.target.dataset.i, f = +e.target.dataset.f;
-        if (!manageRows[i]) return;
-        manageRows[i][f] = e.target.value;
-        if (f === 3){
-          manageRows[i][4] = "";
-          e.target.style.cssText = statusStyle(e.target.value, "");
-          e.target.title = "Chưa check hôm nay (trạng thái cũ)";
-        }
-        saveNumbers(manageRows);
-      });
-    });
-    tb.querySelectorAll("button[data-del]").forEach(b => {
-      b.addEventListener("click", e => {
-        const i = +e.target.dataset.del;
-        manageRows.splice(i, 1);
-        renderManage();
-        saveNumbers(manageRows);
-      });
-    });
+    tb.appendChild(frag);
   }
   $("manageCount").textContent = manageRows.length + " số";
-  updateLimitsInfo();
   updateStats();
 }
 
@@ -884,14 +896,20 @@ function updateLimitsInfo(){
     + (userExpiry ? " | HSD: " + fmtDMY(userExpiry) + (daysLeft(userExpiry) !== null ? " (còn " + Math.max(0, daysLeft(userExpiry)) + " ngày)" : "") : "");
 }
 
+// Chi tinh "Còn hôm nay" là số Còn ĐÃ check trong ngày (xanh) — số Còn cũ tính vào nhóm xám
+function availableFreshRows(){
+  return manageRows.filter(r => isAvailableStatus(r[3]) && isFreshCheck(r[4]));
+}
+
 function updateStats(){
   const total = manageRows.length;
-  const avail = manageRows.filter(r => isAvailableStatus(r[3])).length;
+  const avail = availableFreshRows().length;
+  const stale = manageRows.filter(r => isAvailableStatus(r[3]) && !isFreshCheck(r[4])).length;
   const sold = manageRows.filter(r => {
     const s = String(r[3]||"").toLowerCase();
     return s.includes("hết") || s.includes("het") || s.includes("sold") || s.includes("đã bán") || s.includes("da ban");
   }).length;
-  const unknown = Math.max(0, total - avail - sold);
+  const unknown = Math.max(0, total - avail - stale - sold);
   const checked = userChecksToday;
 
   $("statTotal").textContent = total;
@@ -923,7 +941,7 @@ function updateStats(){
   };
   bar.appendChild(mk("seg-green", avail));
   bar.appendChild(mk("seg-red", sold));
-  bar.appendChild(mk("seg-gray", unknown));
+  bar.appendChild(mk("seg-gray", stale + unknown));
 
   // footer
   const foot = [];
@@ -941,7 +959,7 @@ function renderManagePoster(){
   const poster = $("posterM");
   if (!poster) return;
   poster.querySelectorAll(".cell").forEach(e => e.remove());
-  const avail = manageRows.filter(r => isAvailableStatus(r[3]));
+  const avail = availableFreshRows();
   avail.forEach((row, i) => {
     const stt = i + 1; if (stt > 30) return;
     const bi = stt <= 10 ? 0 : stt <= 20 ? 1 : 2;
@@ -960,7 +978,11 @@ let lastAutoText = "";
 $("cSdt").addEventListener("input", e => document.documentElement.style.setProperty("--sdt", e.target.value));
 $("cCk").addEventListener("input",  e => document.documentElement.style.setProperty("--ck",  e.target.value));
 $("fs").addEventListener("input",   e => $("poster").style.setProperty("--fs", e.target.value || 31));
-$("inp").addEventListener("input", () => { update(); });
+let updateTimer = null;
+$("inp").addEventListener("input", () => {
+  clearTimeout(updateTimer);
+  updateTimer = setTimeout(update, 120);
+});
 $("clear").addEventListener("click", () => { $("inp").value = ""; update(); $("inp").focus(); });
 $("file").addEventListener("change", e => {
   const f = e.target.files[0]; if (!f) return;
@@ -1004,8 +1026,7 @@ async function downloadPosterPNG(posterEl, dataArr, filename){
 
 $("png").addEventListener("click", () => downloadPosterPNG($("poster"), DATA, "so-dep-vinaphone.png"));
 $("pngM").addEventListener("click", () => {
-  const avail = manageRows.filter(r => isAvailableStatus(r[3]));
-  downloadPosterPNG($("posterM"), avail, "so-dep-vinaphone-con.png");
+  downloadPosterPNG($("posterM"), availableFreshRows(), "so-dep-vinaphone-con.png");
 });
 
 /* ---- tabs ---- */
@@ -1045,7 +1066,6 @@ $("manageAdd").addEventListener("click", () => {
   renderManagePoster();
   saveNumbers(manageRows);
   checkAllStatus();
-  renderManagePoster();
 });
 $("manageImport").addEventListener("click", () => {
   const rows = parseList($("mBulk").value);
@@ -1061,89 +1081,153 @@ $("manageImport").addEventListener("click", () => {
   renderManagePoster();
   saveNumbers(manageRows);
   checkAllStatus();
-  renderManagePoster();
 });
 /* ---- kiem tra trang thai qua VNPT API (qua GAS) ---- */
-async function checkAllStatus(){
+let checkRunning = false;
+
+// Cap nhat NGAY o trạng thái của 1 dòng trong DOM, không render lại cả bảng (tránh giật)
+function paintManageRow(r){
+  const idx = manageRows.indexOf(r);
+  if (idx < 0) return;
+  const sel = (isMobileView() ? "#manageCards " : "#manageTbody ") +
+    '[data-i="' + idx + '"][data-f="3"]';
+  const inp = document.querySelector(sel);
+  if (inp){
+    inp.value = r[3] || "";
+    inp.style.cssText = statusStyle(r[3], r[4]);
+    inp.title = r[4] ? "Check lúc " + r[4] : "Chưa check hôm nay (trạng thái cũ)";
+  }
+}
+
+async function checkAllStatus(force){
+  if (checkRunning) return;
   if (!apiEnabled) { setStatus("Đang ở chế độ demo (không kết nối được GAS)"); return; }
   if (!manageRows.length) { setStatus("Không có số để kiểm tra"); return; }
 
-  let rowsToCheck = manageRows;
-  // uu tien so chua co trang thai / loi de khong bi "doi" mai o cuoi danh sach khi limit nho
-  const prio = r => (!r[3] || /lỗi/i.test(String(r[3]))) ? 0 : 1;
-  const ordered = manageRows.slice().sort((a, b) => prio(a) - prio(b));
-  // xin phep check theo danh sach so (moi so chi tinh 1 lan/ngay)
-  try {
-    const bc = await apiCall({ action: "beginCheck", username: currentUser, nums: ordered.map(r => r[0]) });
-    if (bc && bc.ok === false && bc.error === "expired"){
-      setStatus("Tài khoản đã hết hạn (" + fmtDMY(bc.expiry) + ")");
-      return;
-    }
-    if (bc && bc.ok){
-      if (bc.checks_today !== undefined) userChecksToday = Number(bc.checks_today) || 0;
-      if (Array.isArray(bc.allowed_numbers)){
-        const allow = new Set(bc.allowed_numbers.map(phoneKey));
-        rowsToCheck = manageRows.filter(r => allow.has(phoneKey(r[0])));
-      } else if (typeof bc.allowed_count === "number" && bc.allowed_count < manageRows.length){
-        // GAS ban cu: chi biet so luong
-        rowsToCheck = manageRows.slice(0, Math.max(0, bc.allowed_count));
-      }
-      if (bc.allowed === false || !rowsToCheck.length){
-        renderManage();
-        setStatus("Đã đạt giới hạn check hôm nay (" + userChecksToday + "/" + bc.limit + " số)");
-        return;
-      }
-      if (rowsToCheck.length < manageRows.length){
-        setStatus("Chỉ kiểm tra " + rowsToCheck.length + "/" + manageRows.length + " số — " + (manageRows.length - rowsToCheck.length) + " số đã chạm giới hạn hôm nay");
-      }
-    }
-  } catch(e){ setStatus("Lỗi beginCheck: " + e.message); }
-
+  checkRunning = true;
+  const lastBtn = $("lastCheckBtn");
+  if (lastBtn) lastBtn.disabled = true;
   const bar = $("checkProgress");
   const barFill = $("checkProgressBar");
-  if (bar) bar.style.display = "block";
-  if (barFill) barFill.style.width = "0%";
-  let done = 0;
-  for (let i = 0; i < rowsToCheck.length; i++){
-    const r = rowsToCheck[i];
-    setStatus("Đang kiểm tra " + (i+1) + "/" + rowsToCheck.length + "...");
+
+  try {
+    // uu tien so chua co trang thai / loi de khong bi "doi" mai o cuoi danh sach khi limit nho
+    const ordered = manageRows.slice().sort((a, b) => {
+      const prio = r => (!r[3] || /lỗi/i.test(String(r[3]))) ? 0 : 1;
+      return prio(a) - prio(b);
+    });
+
+    let rowsToCheck = ordered;
+    let alreadyCount = 0;
+    let bcLimit = null;
     try {
-      const data = await apiCall({ action: "check", phone: r[0], ck: r[1] || "" });
-      if (data && data.ok){
-        r[3] = data.available ? "Còn" : "Hết";
-        r[4] = nowStamp();
-      } else {
-        r[3] = r[3] || "Lỗi";
+      const bc = await apiCall({ action: "beginCheck", username: currentUser, nums: ordered.map(r => r[0]) });
+      if (bc && bc.ok === false && bc.error === "expired"){
+        setStatus("Tài khoản đã hết hạn (" + fmtDMY(bc.expiry) + ")");
+        return;
+      }
+      if (bc && bc.ok){
+        if (bc.checks_today !== undefined) userChecksToday = Number(bc.checks_today) || 0;
+        if (bc.limit !== undefined) bcLimit = bc.limit;
+        if (Array.isArray(bc.fresh_numbers)){
+          // GAS ban moi: chi check so CHUA check hom nay; so cu mien phi nen bo qua cho nhanh
+          const freshSet = new Set(bc.fresh_numbers.map(phoneKey));
+          rowsToCheck = ordered.filter(r => freshSet.has(phoneKey(r[0])));
+          alreadyCount = Array.isArray(bc.already_numbers)
+            ? bc.already_numbers.length
+            : Math.max(0, ordered.length - rowsToCheck.length);
+        } else if (Array.isArray(bc.allowed_numbers)){
+          const allow = new Set(bc.allowed_numbers.map(phoneKey));
+          rowsToCheck = ordered.filter(r => allow.has(phoneKey(r[0])));
+        } else if (typeof bc.allowed_count === "number" && bc.allowed_count < manageRows.length){
+          // GAS ban cu: chi biet so luong
+          rowsToCheck = ordered.slice(0, Math.max(0, bc.allowed_count));
+        }
+        if (bc.allowed === false && !rowsToCheck.length){
+          renderManage();
+          const lim = toLimitNumber(bcLimit);
+          if (lim !== Infinity && userChecksToday >= lim){
+            setStatus("Đã đạt giới hạn check hôm nay (" + userChecksToday + "/" + limitText(lim) + " số)");
+          } else if (userChecksToday > 0){
+            setStatus("Hôm nay đã check " + userChecksToday + " số — không còn số mới cần check");
+          } else {
+            setStatus("Không có số mới cần kiểm tra");
+          }
+          return;
+        }
       }
     } catch(e){
-      r[3] = "Lỗi";
-      setStatus("Lỗi: " + e.message);
+      setStatus("Lỗi beginCheck: " + e.message + " — không check gì để tránh mạng lang phi");
+      return;
     }
-    done++;
-    if (barFill) barFill.style.width = Math.round((done / rowsToCheck.length) * 100) + "%";
+
+    if (!rowsToCheck.length){
+      updateLimitsInfo();
+      updateStats();
+      setStatus(alreadyCount > 0
+        ? "Tất cả " + alreadyCount + " số đã được check hôm nay — không cần check lại"
+        : "Không có số mới cần kiểm tra");
+      return;
+    }
+
+    if (rowsToCheck.length < manageRows.length){
+      setStatus("Chỉ kiểm tra " + rowsToCheck.length + " số mới (bỏ qua " + (manageRows.length - rowsToCheck.length) + " số đã check hôm nay)");
+    }
+    if (bar) bar.style.display = "block";
+    if (barFill) barFill.style.width = "0%";
+
+    // Check song song tung nho de nhanh hon, van lech nhe de khong bi VNPT gioi han tan so
+    const total = rowsToCheck.length;
+    const CONC = 3;
+    let done = 0, errCount = 0;
+    for (let i = 0; i < total; i += CONC){
+      const chunk = rowsToCheck.slice(i, i + CONC);
+      const results = await Promise.all(chunk.map((r, k) =>
+        new Promise(res => setTimeout(res, k * 90)).then(() =>
+          apiCall({ action: "check", phone: r[0], ck: r[1] || "", force: force ? 1 : 0 })
+            .then(data => ({ r, ok: !!(data && data.ok), avail: data ? data.available : null }))
+            .catch(err => ({ r, ok: false, err: err.message }))
+        )
+      ));
+      for (const res of results){
+        if (res.ok){
+          res.r[3] = res.avail ? "Còn" : "Hết";
+          res.r[4] = nowStamp();
+        } else {
+          if (!/lỗi/i.test(String(res.r[3] || ""))) res.r[3] = "Lỗi";
+          errCount++;
+        }
+        paintManageRow(res.r);
+        done++;
+      }
+      if (barFill) barFill.style.width = Math.round((done / total) * 100) + "%";
+      updateStats();
+      setStatus("Đang kiểm tra " + done + "/" + total + " số...");
+    }
+
+    await saveNumbers(manageRows);
     renderManage();
-    // nho de tranh bi VNPT gioi han tan so
-    if (i < rowsToCheck.length - 1) await new Promise(r => setTimeout(r, 250));
+    renderManagePoster();
+    updateLimitsInfo();
+    const skipped = manageRows.length - rowsToCheck.length;
+    setStatus("Đã kiểm tra " + done + " số" +
+      (errCount ? " (" + errCount + " lỗi)" : "") +
+      (skipped > 0 ? " — bỏ qua " + skipped + " số đã check hôm nay" : ""));
+    if (lastBtn) lastBtn.textContent = "Lần check cuối: " + new Date().toLocaleTimeString("vi-VN");
+  } finally {
+    if (bar) setTimeout(() => { bar.style.display = "none"; }, 1200);
+    if (lastBtn) lastBtn.disabled = false;
+    checkRunning = false;
   }
-  await saveNumbers(manageRows);
-  renderManage();
-  renderManagePoster();
-  const partial = rowsToCheck.length < manageRows.length;
-  setStatus("Đã kiểm tra " + done + " số" + (partial ? " (chạm giới hạn hôm nay)" : ""));
-  const lastBtn = $("lastCheckBtn");
-  if (lastBtn) lastBtn.textContent = "Lần check cuối: " + new Date().toLocaleTimeString("vi-VN");
-  if (bar) setTimeout(() => { bar.style.display = "none"; }, 1200);
 }
 // tu dong check khi vao web + dinh ky 15 phut
 let checkTimer = null;
 let syncTimer = null;
 let profileTimer = null;
 let profileBusy = false;
-// nút hiển thị thời gian check cuối, bấm để check lại
+// nút hiển thị thời gian check cuối, bấm để check lại (ép check thật, bỏ qua cache)
 const _lastCheckBtn = $("lastCheckBtn");
-if (_lastCheckBtn) _lastCheckBtn.addEventListener("click", () => checkAllStatus());
-const _limitsInfo = $("limitsInfo");
-if (_limitsInfo) _limitsInfo.addEventListener("click", () => refreshProfile(true));
+if (_lastCheckBtn) _lastCheckBtn.addEventListener("click", () => checkAllStatus(true));
 
 // cap nhat thong tin tai khoan (gioi han, so da check, han dung) tu Sheet
 function applyProfileData(data){
@@ -1223,13 +1307,12 @@ async function refreshProfile(showMsg){
 }
 
 async function syncFromSheet(){
-  if (!apiEnabled) return;
+  if (!apiEnabled || checkRunning) return; // không đè dữ liệu giữa lúc đang check
   try {
     const fresh = await loadNumbers();
     if (JSON.stringify(fresh) !== JSON.stringify(manageRows)){
       manageRows = fresh;
       renderManage();
-      renderManagePoster();
       renderManagePoster();
     }
   } catch(e){}
