@@ -189,32 +189,42 @@
   .add-pane[hidden]{display:none}
   .bulk-label{font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:6px}
   .bulk-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-  /* ---- danh sách số: lưới card 1 dòng, tự chia cột theo bề rộng màn hình ---- */
-  .manage-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px;margin-top:10px}
-  .mcard{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);
-         border-left:3px solid #c7d4e4;border-radius:10px;padding:8px 10px;min-width:0;
-         box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
+  /* ---- danh sách số: card 2 dòng (nhãn + input), tập trung vào số & trạng thái ---- */
+  .manage-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(380px,1fr));gap:10px;margin-top:10px}
+  .mcard{display:grid;grid-template-columns:14px minmax(0,1.7fr) minmax(0,1fr) minmax(0,1fr) 22px;
+         column-gap:8px;row-gap:5px;align-items:center;background:#fff;
+         border:1px solid var(--border);border-left:3px solid #c7d4e4;border-radius:12px;
+         padding:10px 12px;min-width:0;box-shadow:var(--shadow);
+         transition:border-color .15s,box-shadow .15s}
   .mcard:hover{box-shadow:0 4px 14px rgba(15,23,42,.08)}
   .mcard.s-avail{border-left-color:var(--success)}
   .mcard.s-sold{border-left-color:var(--danger)}
   .mcard.s-stale{border-left-color:#94a3b8}
   .mcard.s-none{border-left-color:#c7d4e4}
-  .mcard-stt{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--muted);background:#f1f5f9;border-radius:6px;padding:1px 6px}
-  #app button.mcard-dot{flex:0 0 auto;width:12px;height:12px;border-radius:50%;border:0;padding:0;min-width:0;
-                        background:#c7d4e4;cursor:pointer;box-shadow:0 0 0 3px rgba(148,163,184,.16)}
+  #app button.mcard-dot{grid-column:1;grid-row:1/3;width:14px;height:14px;border-radius:50%;border:0;
+                        padding:0;min-width:0;background:#c7d4e4;cursor:pointer;
+                        box-shadow:0 0 0 3px rgba(148,163,184,.14)}
   #app button.mcard-dot.s-avail{background:var(--success);box-shadow:0 0 0 3px rgba(22,163,74,.16)}
   #app button.mcard-dot.s-sold{background:var(--danger);box-shadow:0 0 0 3px rgba(220,38,38,.16)}
-  #app button.mcard-dot.s-stale{background:#94a3b8;box-shadow:0 0 0 3px rgba(148,163,184,.16)}
+  #app button.mcard-dot.s-stale{background:#94a3b8;box-shadow:0 0 0 3px rgba(148,163,184,.14)}
   #app button.mcard-dot.s-none{background:#c7d4e4;box-shadow:0 0 0 3px rgba(148,163,184,.12)}
-  .mcard-phone,.mcard-ck{min-width:0;width:0;border:1px solid var(--border);border-radius:7px;background:#fff;
-                         color:var(--text);font-size:13.5px;padding:6px 8px}
-  .mcard-phone{flex:1.6;font-size:14.5px;font-weight:700;letter-spacing:.3px;color:var(--sdt);background:#f8fafc}
-  .mcard-ck{flex:1}
-  .mcard-phone:focus,.mcard-ck:focus{border-color:var(--primary);background:#fff;outline:none}
-  #app button.mcard-del{flex:0 0 auto;width:26px;height:26px;border:0;border-radius:6px;padding:0;min-width:0;
-                        background:var(--danger);color:#fff;font-size:17px;line-height:1;font-weight:700;
-                        display:flex;align-items:center;justify-content:center;cursor:pointer}
-  #app button.mcard-del:hover{background:#b91c1c}
+  .mcard-label{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:var(--muted);
+               text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mcard-label.l1{grid-column:2;grid-row:1}
+  .mcard-label.l2{grid-column:3;grid-row:1}
+  .mcard-label.l3{grid-column:4;grid-row:1}
+  #app input.mcard-phone,#app input.mcard-ck{grid-row:2;width:100%;min-width:0;border:1px solid var(--border);
+                         border-radius:8px;background:#fff;color:var(--text);font-size:16px;padding:7px 8px}
+  #app input.mcard-phone{grid-column:2;font-size:16px;font-weight:700;letter-spacing:.2px;color:var(--sdt);background:#f8fafc}
+  #app input.mcard-ck.ck2{grid-column:3}
+  #app input.mcard-ck.ck3{grid-column:4}
+  #app input.mcard-phone:focus,#app input.mcard-ck:focus{border-color:var(--primary);background:#fff;outline:none;
+                         box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+  #app button.mcard-del{grid-column:5;grid-row:1/3;align-self:center;justify-self:center;
+                        width:24px;height:24px;border:1px solid transparent;border-radius:6px;padding:0;min-width:0;
+                        background:transparent;color:#94a3b8;font-size:15px;line-height:1;cursor:pointer;
+                        display:flex;align-items:center;justify-content:center}
+  #app button.mcard-del:hover{background:#fee2e2;color:#dc2626;border-color:#fecaca}
   .bulk{margin-top:14px}
   .bulk textarea{height:120px}
   .bulk label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
@@ -251,11 +261,10 @@
     .addtabs{width:100%}
     #app button.addtab{flex:1;padding:8px 6px;text-align:center}
     .manage-actions button{min-width:0;flex:1}
-    .mcard{padding:8px;gap:4px}
-    .mcard-stt{display:none}
-    .mcard-phone{flex:2.2;letter-spacing:0;padding:6px}
-    .mcard-ck{padding:6px}
-    #app button.mcard-del{width:24px;height:24px}
+    .mcard{grid-template-columns:12px minmax(0,2fr) minmax(0,1fr) minmax(0,1fr) 20px;column-gap:6px;padding:9px 10px}
+    .mcard-label{font-size:10px}
+    #app input.mcard-ck{font-size:16px}
+    #app button.mcard-del{width:20px;height:20px;font-size:14px}
     .manage-cards{grid-template-columns:1fr}
   }
   @media print{
@@ -846,11 +855,13 @@ function buildManageCard(r, i){
   card.dataset.i = i;
   card.title = statusTitle(r);
   card.innerHTML = `
-    <span class="mcard-stt">#${i+1}</span>
     <button type="button" class="mcard-dot ${statusClass(r[3], r[4])}" data-status="${i}" title="${esc(statusTitle(r))} — bấm để đổi" aria-label="Trạng thái: ${esc(statusTitle(r))} — bấm để đổi"></button>
-    <input class="mcard-phone" type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0" placeholder="SĐT" title="Số thuê bao">
-    <input class="mcard-ck" type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1" placeholder="Gốc" title="Cam kết gốc">
-    <input class="mcard-ck" type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2" placeholder="Mới" title="Cam kết mới">
+    <span class="mcard-label l1" title="Số thuê bao">SĐT</span>
+    <span class="mcard-label l2" title="Cam kết gốc">CAM KẾT GỐC</span>
+    <span class="mcard-label l3" title="Cam kết mới">CAM KẾT MỚI</span>
+    <input class="mcard-phone" type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0" placeholder="0846 74 7979" title="Số thuê bao">
+    <input class="mcard-ck ck2" type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1" placeholder="1500k" title="Cam kết gốc">
+    <input class="mcard-ck ck3" type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2" placeholder="800k" title="Cam kết mới">
     <button type="button" class="mcard-del" data-del="${i}" title="Xóa số này" aria-label="Xóa số ${esc(r[0]||(i+1))}">×</button>`;
   return card;
 }
