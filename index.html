@@ -181,8 +181,13 @@
   .manage-actions{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0;align-items:center}
   .manage-actions button{flex:0 0 auto;min-width:110px}
   .addtabs{display:flex;gap:6px;margin:12px 0 14px;background:#f3f4f6;padding:4px;border-radius:10px;width:max-content;max-width:100%}
-  .addtab{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
-  .addtab.active{background:var(--primary);color:#fff}
+  #app button.addtab{border:0;background:transparent;color:var(--muted);padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap;transition:background .15s,color .15s}
+  #app button.addtab:hover{background:rgba(255,255,255,.65);color:var(--text)}
+  #app button.addtab.active{background:var(--primary);color:#fff}
+  .add-block{margin:12px 0 14px}
+  .add-block .addtabs{margin:0 0 12px}
+  .add-pane[hidden]{display:none}
+  .bulk-label{font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:6px}
   .bulk-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
   .manage-cards{display:none}
   .mcard{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:12px;
@@ -233,7 +238,7 @@
     #lock .box{padding:26px 20px}
     .manage-grid{grid-template-columns:1fr}
     .addtabs{width:100%}
-    .addtab{flex:1;padding:8px 6px;text-align:center}
+    #app button.addtab{flex:1;padding:8px 6px;text-align:center}
     .manage-actions button{min-width:0;flex:1}
     .mcard{padding:10px}
     table.mtable{display:none}
@@ -298,15 +303,6 @@
     <div id="tab-manage" class="tabpane active">
       <div class="manage-box">
         <h2>Quản lý số của bạn</h2>
-        <div id="addTabBulk" style="display:none">
-          <div class="bulk-card">
-            <label style="font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:4px">Nhập hàng loạt (dán từ Excel/Sheet)</label>
-            <textarea id="mBulk" spellcheck="false" placeholder="0846 74 7979	1500k"></textarea>
-            <div class="manage-actions">
-              <button id="manageImport" class="ghost">Nhập từ text</button>
-            </div>
-          </div>
-        </div>
         <div class="stats-card" id="statsCard">
           <div class="stats-grid">
             <div class="stat-tile"><div class="stat-label">Tổng số</div><div class="stat-value" id="statTotal">0</div></div>
@@ -334,29 +330,42 @@
           </div>
           <div class="stat-foot" id="statFoot"></div>
         </div>
-        <div style="display:flex;gap:6px;margin:12px 0 14px;background:#f3f4f6;padding:4px;border-radius:10px;width:max-content;max-width:100%">
-          <button class="addtab active" data-addtab="single" style="border:0;background:#1a6fd4;color:#fff;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Thêm số từng cái</button>
-          <button class="addtab" data-addtab="bulk" style="border:0;background:transparent;color:#5b6b7f;padding:7px 14px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer">Nhập hàng loạt (Excel)</button>
-        </div>
-        <div id="addTabSingle">
-        <div class="manage-grid">
-          <div>
-            <label>Số thuê bao</label>
-            <input type="text" id="mSdt" placeholder="0846 74 7979">
+        <div class="add-block">
+          <div class="addtabs" role="tablist" aria-label="Cách thêm số">
+            <button type="button" class="addtab active" data-addtab="single" role="tab" aria-selected="true">Thêm số từng cái</button>
+            <button type="button" class="addtab" data-addtab="bulk" role="tab" aria-selected="false">Nhập hàng loạt (Excel)</button>
           </div>
-          <div>
-            <label>Cam kết gốc</label>
-            <input type="text" id="mCkGoc" placeholder="1500k">
+
+          <div id="addTabSingle" class="add-pane">
+            <div class="manage-grid">
+              <div>
+                <label for="mSdt">Số thuê bao</label>
+                <input type="text" id="mSdt" placeholder="0846 74 7979">
+              </div>
+              <div>
+                <label for="mCkGoc">Cam kết gốc</label>
+                <input type="text" id="mCkGoc" placeholder="1500k">
+              </div>
+              <div>
+                <label for="mCkMoi">Cam kết mới</label>
+                <input type="text" id="mCkMoi" placeholder="600k">
+              </div>
+            </div>
+            <div class="manage-actions">
+              <button id="manageAdd" type="button">+ Thêm số</button>
+              <span class="count" id="manageCount">0 số</span>
+            </div>
           </div>
-          <div>
-            <label>Cam kết mới</label>
-            <input type="text" id="mCkMoi" placeholder="600k">
+
+          <div id="addTabBulk" class="add-pane" hidden>
+            <div class="bulk-card">
+              <label for="mBulk" class="bulk-label">Dán danh sách từ Excel/Sheet — mỗi dòng: Số, CK gốc, CK mới</label>
+              <textarea id="mBulk" class="mBulk" spellcheck="false" placeholder="0846 74 7979&#9;1500k&#9;800k"></textarea>
+              <div class="manage-actions">
+                <button id="manageImport" class="ghost" type="button">Nhập từ text</button>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="manage-actions">
-          <button id="manageAdd">+ Thêm số</button>
-          <span class="count" id="manageCount">0 số</span>
-        </div>
         </div>
         <div class="legend">
           <span class="legend-item"><i class="dot green"></i>Còn (đã check hôm nay)</span>
@@ -1036,20 +1045,22 @@ document.querySelectorAll(".tab").forEach(b => b.addEventListener("click", () =>
   document.querySelectorAll(".tabpane").forEach(p=>p.classList.remove("active"));
   document.getElementById("tab-" + b.dataset.tab).classList.add("active");
 }));
-document.querySelectorAll(".addtab").forEach(b => b.addEventListener("click", () => {
-  document.querySelectorAll(".addtab").forEach(x=>x.classList.remove("active"));
-  b.classList.add("active");
-  const t = b.dataset.addtab;
+function setAddTab(mode){
+  const bulkMode = mode === "bulk";
+  document.querySelectorAll(".addtab").forEach(x => {
+    const on = x.dataset.addtab === mode;
+    x.classList.toggle("active", on);
+    x.setAttribute("aria-selected", on ? "true" : "false");
+  });
   const single = $("addTabSingle");
   const bulk = $("addTabBulk");
-  if (single) single.style.display = (t === "single") ? "" : "none";
-  if (bulk) bulk.style.display = (t === "bulk") ? "" : "none";
-}));
+  if (single) single.hidden = bulkMode;
+  if (bulk) bulk.hidden = !bulkMode;
+}
+document.querySelectorAll(".addtab").forEach(b => b.addEventListener("click", () => setAddTab(b.dataset.addtab)));
 
 /* ---- manage events ---- */
 $("manageAdd").addEventListener("click", () => {
-  const single = $("addTabSingle");
-  if (single) single.style.display = "";
   const sdt = $("mSdt").value.trim();
   const ckGoc = normCK($("mCkGoc").value.trim());
   const ckMoi = normCK($("mCkMoi").value.trim());
