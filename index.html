@@ -189,34 +189,32 @@
   .add-pane[hidden]{display:none}
   .bulk-label{font-size:12.5px;font-weight:700;color:#5b6b7f;display:block;margin-bottom:6px}
   .bulk-card{background:#fff;border:1px solid var(--border);border-radius:var(--radius);padding:14px;box-shadow:var(--shadow)}
-  /* ---- danh sách số: lưới card, tự chia cột theo bề rộng màn hình ---- */
-  .manage-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:10px;margin-top:10px}
-  .mcard{position:relative;background:#fff;border:1px solid var(--border);border-left:3px solid #c7d4e4;
-         border-radius:10px;padding:10px 12px;display:flex;flex-direction:column;gap:8px;
+  /* ---- danh sách số: lưới card 1 dòng, tự chia cột theo bề rộng màn hình ---- */
+  .manage-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(360px,1fr));gap:10px;margin-top:10px}
+  .mcard{display:flex;align-items:center;gap:6px;background:#fff;border:1px solid var(--border);
+         border-left:3px solid #c7d4e4;border-radius:10px;padding:8px 10px;min-width:0;
          box-shadow:var(--shadow);transition:border-color .15s,box-shadow .15s}
   .mcard:hover{box-shadow:0 4px 14px rgba(15,23,42,.08)}
   .mcard.s-avail{border-left-color:var(--success)}
   .mcard.s-sold{border-left-color:var(--danger)}
   .mcard.s-stale{border-left-color:#94a3b8}
   .mcard.s-none{border-left-color:#c7d4e4}
-  .mcard-head{display:flex;align-items:center;gap:8px;min-width:0}
-  .mcard-stt{font-size:11.5px;font-weight:700;color:var(--muted);background:#f1f5f9;border-radius:6px;padding:1px 7px;flex:0 0 auto}
-  .mcard-time{flex:1;min-width:0;font-size:11.5px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-  .mcard-time.fresh{color:var(--success);font-weight:600}
-  .mcard-del{border:0;background:#fee2e2;color:#b91c1c;width:24px;height:24px;border-radius:6px;
-             font-size:16px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;
-             padding:0;min-width:0;flex:0 0 auto}
-  .mcard-del:hover{background:#fecaca}
-  .mcard-line{display:flex;gap:8px;align-items:stretch}
-  .mcard-phone{flex:1;min-width:0;font-size:15px;font-weight:700;letter-spacing:.4px;color:var(--sdt);
-               border:1px solid var(--border);border-radius:7px;padding:7px 9px;background:#f8fafc}
-  .mcard-phone:focus{border-color:var(--primary);background:#fff;outline:none}
-  .mcard-status{flex:0 0 96px;width:96px;min-width:0;font-size:12.5px !important}
-  .mcard-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-  .mcard-field{display:flex;flex-direction:column;gap:3px;font-size:11.5px;font-weight:600;color:var(--muted);min-width:0}
-  .mcard-field input{width:100%;min-width:0;font-size:13.5px;color:var(--text);border:1px solid var(--border);
-                     border-radius:7px;padding:6px 8px;background:#fff}
-  .mcard-field input:focus{border-color:var(--primary);outline:none}
+  .mcard-stt{flex:0 0 auto;font-size:11.5px;font-weight:700;color:var(--muted);background:#f1f5f9;border-radius:6px;padding:1px 6px}
+  #app button.mcard-dot{flex:0 0 auto;width:12px;height:12px;border-radius:50%;border:0;padding:0;min-width:0;
+                        background:#c7d4e4;cursor:pointer;box-shadow:0 0 0 3px rgba(148,163,184,.16)}
+  #app button.mcard-dot.s-avail{background:var(--success);box-shadow:0 0 0 3px rgba(22,163,74,.16)}
+  #app button.mcard-dot.s-sold{background:var(--danger);box-shadow:0 0 0 3px rgba(220,38,38,.16)}
+  #app button.mcard-dot.s-stale{background:#94a3b8;box-shadow:0 0 0 3px rgba(148,163,184,.16)}
+  #app button.mcard-dot.s-none{background:#c7d4e4;box-shadow:0 0 0 3px rgba(148,163,184,.12)}
+  .mcard-phone,.mcard-ck{min-width:0;width:0;border:1px solid var(--border);border-radius:7px;background:#fff;
+                         color:var(--text);font-size:13.5px;padding:6px 8px}
+  .mcard-phone{flex:1.6;font-size:14.5px;font-weight:700;letter-spacing:.3px;color:var(--sdt);background:#f8fafc}
+  .mcard-ck{flex:1}
+  .mcard-phone:focus,.mcard-ck:focus{border-color:var(--primary);background:#fff;outline:none}
+  #app button.mcard-del{flex:0 0 auto;width:26px;height:26px;border:0;border-radius:6px;padding:0;min-width:0;
+                        background:var(--danger);color:#fff;font-size:17px;line-height:1;font-weight:700;
+                        display:flex;align-items:center;justify-content:center;cursor:pointer}
+  #app button.mcard-del:hover{background:#b91c1c}
   .bulk{margin-top:14px}
   .bulk textarea{height:120px}
   .bulk label{font-size:12px;font-weight:600;color:var(--muted);display:block;margin-bottom:4px}
@@ -228,6 +226,7 @@
   .legend-item .dot.green{background:var(--success)}
   .legend-item .dot.gray{background:#cbd5e1}
   .legend-item .dot.red{background:var(--danger)}
+  .legend-hint{font-size:11.5px;color:var(--muted);align-self:center;margin-left:2px}
 
   #checkProgress{display:none;margin-top:8px;height:6px;background:#eef2f7;border-radius:999px;overflow:hidden}
   #checkProgressBar{height:100%;width:0%;background:var(--primary);transition:width .2s;border-radius:999px}
@@ -252,7 +251,11 @@
     .addtabs{width:100%}
     #app button.addtab{flex:1;padding:8px 6px;text-align:center}
     .manage-actions button{min-width:0;flex:1}
-    .mcard{padding:10px}
+    .mcard{padding:8px;gap:4px}
+    .mcard-stt{display:none}
+    .mcard-phone{flex:2.2;letter-spacing:0;padding:6px}
+    .mcard-ck{padding:6px}
+    #app button.mcard-del{width:24px;height:24px}
     .manage-cards{grid-template-columns:1fr}
   }
   @media print{
@@ -382,6 +385,7 @@
           <span class="legend-item"><i class="dot green"></i>Còn (đã check hôm nay)</span>
           <span class="legend-item"><i class="dot gray"></i>Còn (trạng thái cũ)</span>
           <span class="legend-item"><i class="dot red"></i>Hết</span>
+          <span class="legend-hint">Bấm chấm màu để đổi trạng thái</span>
         </div>
         <div class="status" id="manageStatus"></div>
         <div id="checkProgress" style="display:none;margin-top:6px;height:8px;background:#e8effa;border-radius:4px;overflow:hidden">
@@ -768,19 +772,10 @@ function isFreshCheck(ts){
   const iso = parseDateISO(s);
   return !!iso && iso === todayISO();
 }
-function statusStyle(v, checkedAt){
-  const s = String(v||"").toLowerCase();
-  if (s.includes("còn") || s === "con" || s.includes("available")) {
-    // chi xanh khi da check thanh cong trong hom nay, con lai xam = trang thai cu
-    if (!isFreshCheck(checkedAt)) {
-      return "background:#e5e7eb;color:#6b7280;border:1px solid #d1d5db;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
-    }
-    return "background:#16a34a;color:#fff;border:none;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
-  }
-  if (s.includes("hết") || s.includes("het") || s.includes("đã bán") || s.includes("da ban") || s.includes("sold")) {
-    return "background:#dc2626;color:#fff;border:none;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
-  }
-  return "background:#e8effa;color:#1a4f9c;border:1px solid #c7d4e4;border-radius:8px;padding:4px 8px;font-weight:700;text-align:center";
+function statusTitle(r){
+  const st = String(r[3]||"").trim() || "Chưa check";
+  if (!r[4]) return st + " · chưa check hôm nay";
+  return st + " · " + (isFreshCheck(r[4]) ? "check hôm nay " : "check cũ ") + fmtCheckTime(r[4]).replace(/^Hôm nay /, "");
 }
 function statusClass(v, checkedAt){
   const s = String(v||"").toLowerCase();
@@ -849,20 +844,14 @@ function buildManageCard(r, i){
   const card = document.createElement("div");
   card.className = "mcard " + statusClass(r[3], r[4]);
   card.dataset.i = i;
+  card.title = statusTitle(r);
   card.innerHTML = `
-    <div class="mcard-head">
-      <span class="mcard-stt">#${i+1}</span>
-      <span class="mcard-time${isFreshCheck(r[4]) ? " fresh" : ""}">${r[4] ? (isFreshCheck(r[4]) ? "✓ " : "Check cũ: ") + fmtCheckTime(r[4]) : "Chưa check hôm nay"}</span>
-      <button class="mcard-del" data-del="${i}" title="Xóa số này" aria-label="Xóa số ${esc(r[0]||(i+1))}">×</button>
-    </div>
-    <div class="mcard-line">
-      <input class="mcard-phone" type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0" placeholder="Số thuê bao">
-      <input class="mcard-status" type="text" value="${esc(r[3]||"")}" data-i="${i}" data-f="3" placeholder="Trạng thái" style="${statusStyle(r[3], r[4])}" title="${r[4] ? "Check lúc " + esc(r[4]) : "Chưa check hôm nay (trạng thái cũ)"}">
-    </div>
-    <div class="mcard-row">
-      <label class="mcard-field"><span>CK gốc</span><input type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1" placeholder="1500k"></label>
-      <label class="mcard-field"><span>CK mới</span><input type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2" placeholder="600k"></label>
-    </div>`;
+    <span class="mcard-stt">#${i+1}</span>
+    <button type="button" class="mcard-dot ${statusClass(r[3], r[4])}" data-status="${i}" title="${esc(statusTitle(r))} — bấm để đổi" aria-label="Trạng thái: ${esc(statusTitle(r))} — bấm để đổi"></button>
+    <input class="mcard-phone" type="text" value="${esc(r[0]||"")}" data-i="${i}" data-f="0" placeholder="SĐT" title="Số thuê bao">
+    <input class="mcard-ck" type="text" value="${esc(r[1]||"")}" data-i="${i}" data-f="1" placeholder="Gốc" title="Cam kết gốc">
+    <input class="mcard-ck" type="text" value="${esc(r[2]||"")}" data-i="${i}" data-f="2" placeholder="Mới" title="Cam kết mới">
+    <button type="button" class="mcard-del" data-del="${i}" title="Xóa số này" aria-label="Xóa số ${esc(r[0]||(i+1))}">×</button>`;
   return card;
 }
 
@@ -874,18 +863,32 @@ document.addEventListener("change", e => {
   const i = Number(t.dataset.i), f = Number(t.dataset.f);
   if (!manageRows[i]) return;
   manageRows[i][f] = t.value;
-  if (f === 3){
-    // sua tay = chua duoc check -> trang thai cu (xam)
-    manageRows[i][4] = "";
-    t.style.cssText = statusStyle(t.value, "");
-    t.title = "Chưa check hôm nay (trạng thái cũ)";
-    const card = t.closest(".mcard");
-    if (card){
-      card.className = "mcard " + statusClass(t.value, "");
-      const tm = card.querySelector(".mcard-time");
-      if (tm){ tm.textContent = "Chưa check hôm nay"; tm.classList.remove("fresh"); }
-    }
+  updateStats();
+  saveNumbers(manageRows);
+});
+// Bấm chấm màu để đổi trạng thái: Còn -> Hết -> (trống) -> Còn
+document.addEventListener("click", e => {
+  const dot = e.target && e.target.closest ? e.target.closest("button[data-status]") : null;
+  if (!dot || !dot.closest("#manageCards")) return;
+  const i = Number(dot.dataset.status);
+  const r = manageRows[i];
+  if (!r) return;
+  const cur = String(r[3]||"").toLowerCase();
+  let next;
+  if (cur.includes("còn") || cur === "con") next = "Hết";
+  else if (cur.includes("hết") || cur.includes("het")) next = "";
+  else next = "Còn";
+  r[3] = next;
+  r[4] = ""; // sửa tay = chưa check hôm nay
+  const cls = statusClass(next, "");
+  const card = dot.closest(".mcard");
+  if (card){
+    card.className = "mcard " + cls;
+    card.title = statusTitle(r);
   }
+  dot.className = "mcard-dot " + cls;
+  dot.title = statusTitle(r) + " — bấm để đổi";
+  dot.setAttribute("aria-label", "Trạng thái: " + statusTitle(r) + " — bấm để đổi");
   updateStats();
   saveNumbers(manageRows);
 });
@@ -1120,21 +1123,16 @@ let checkRunning = false;
 function paintManageRow(r){
   const idx = manageRows.indexOf(r);
   if (idx < 0) return;
-  const inp = document.querySelector('#manageCards [data-i="' + idx + '"][data-f="3"]');
-  if (inp){
-    inp.value = r[3] || "";
-    inp.style.cssText = statusStyle(r[3], r[4]);
-    inp.title = r[4] ? "Check lúc " + r[4] : "Chưa check hôm nay (trạng thái cũ)";
-  }
   const card = document.querySelector('#manageCards .mcard[data-i="' + idx + '"]');
-  if (card){
-    card.className = "mcard " + statusClass(r[3], r[4]);
-    const tm = card.querySelector(".mcard-time");
-    if (tm){
-      const fresh = isFreshCheck(r[4]);
-      tm.textContent = r[4] ? (fresh ? "✓ " : "Check cũ: ") + fmtCheckTime(r[4]) : "Chưa check hôm nay";
-      tm.classList.toggle("fresh", fresh);
-    }
+  if (!card) return;
+  const cls = statusClass(r[3], r[4]);
+  card.className = "mcard " + cls;
+  card.title = statusTitle(r);
+  const dot = card.querySelector(".mcard-dot");
+  if (dot){
+    dot.className = "mcard-dot " + cls;
+    dot.title = statusTitle(r) + " — bấm để đổi";
+    dot.setAttribute("aria-label", "Trạng thái: " + statusTitle(r) + " — bấm để đổi");
   }
 }
 
